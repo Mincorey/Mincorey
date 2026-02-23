@@ -371,34 +371,24 @@ export const createNewWorkbook = (): ExcelJS.Workbook => {
     // 1. Лист SMENA
     const wsSmena = wb.addWorksheet('SMENA');
     wsSmena.columns = [
-        { header: 'Дата', key: 'date', width: 15 },
-        { header: 'Сотрудник', key: 'employee', width: 25 },
-        { header: 'Принято (л)', key: 'receivedL', width: 15 },
-        { header: 'Принято (кг)', key: 'receivedKg', width: 15 },
-        { header: 'Выдано ТЗА (л)', key: 'issuedTzaL', width: 18 },
-        { header: 'Выдано ТЗА (кг)', key: 'issuedTzaKg', width: 18 },
-        { header: 'Выдано ВС (л)', key: 'issuedVsL', width: 18 },
-        { header: 'Выдано ВС (кг)', key: 'issuedVsKg', width: 18 },
-        { header: 'Статус', key: 'status', width: 12 }
+        { key: 'date', width: 15 },
+        { key: 'employee', width: 25 },
+        { key: 'receivedL', width: 15 },
+        { key: 'receivedKg', width: 15 },
+        { key: 'issuedTzaL', width: 18 },
+        { key: 'issuedTzaKg', width: 18 },
+        { key: 'issuedVsL', width: 18 },
+        { key: 'issuedVsKg', width: 18 },
+        { key: 'status', width: 12 }
     ];
     
     // Add Title Row manually at row 1
-    wsSmena.insertRow(1, ['СВОДНЫЙ ЖУРНАЛ СМЕН']);
-    wsSmena.mergeCells('A1:I1');
-    const titleRow = wsSmena.getRow(1);
-    titleRow.font = { bold: true, size: 14 };
-    titleRow.alignment = { horizontal: 'center' };
-    
-    // Header Row is now at row 2 (automatically added by columns? No, columns adds header at row 1 if not specified differently, but we inserted row 1)
-    // Actually, when defining columns, ExcelJS sets the header row.
-    // Let's reset and build manually to be safe and match structure.
-    
-    wsSmena.spliceRows(1, 1); // Remove auto header if any
     wsSmena.getRow(1).values = ['СВОДНЫЙ ЖУРНАЛ СМЕН'];
     wsSmena.mergeCells('A1:I1');
     wsSmena.getCell('A1').font = { bold: true, size: 14 };
     wsSmena.getCell('A1').alignment = { horizontal: 'center' };
 
+    // Header Row at row 2
     wsSmena.getRow(2).values = ['Дата', 'Сотрудник', 'Принято (л)', 'Принято (кг)', 'Выдано ТЗА (л)', 'Выдано ТЗА (кг)', 'Выдано ВС (л)', 'Выдано ВС (кг)', 'Статус'];
     wsSmena.getRow(2).eachCell((cell) => {
         cell.style = STYLES.header;

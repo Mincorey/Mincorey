@@ -283,7 +283,7 @@ const App: React.FC = () => {
         if (!wb) {
             try {
                 console.log("Попытка загрузки ZAMER_main_.xlsx из корня...");
-                const response = await fetch('./ZAMER_main_.xlsx');
+                const response = await fetch('/ZAMER_main_.xlsx');
                 if (response.ok) {
                     const arrayBuffer = await response.arrayBuffer();
                     wb = new ExcelJS.Workbook();
