@@ -8,8 +8,6 @@
     <meta name="description" content="Приложение для учета ГСМ в аэропорту" />
     <link rel="apple-touch-icon" href="/icon.svg">
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#d6d6d6" />
     <title>Учет ГСМ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/index.css">
@@ -17,18 +15,5 @@
   <body class="bg-gray-100">
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
-    <script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/service-worker.js")
-        .then(function (registration) {
-          console.log("Service Worker зарегистрирован:", registration);
-        })
-        .catch(function (error) {
-          console.log("Ошибка регистрации SW:", error);
-        });
-    });
-  }
-</script>
 </body>
 </html>

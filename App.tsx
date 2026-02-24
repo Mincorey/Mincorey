@@ -103,7 +103,12 @@ const App: React.FC = () => {
   const [smenaReportData, setSmenaReportData] = useState<{ rows: any[], totals: any } | null>(null);
   const [showSmenaReportModal, setShowSmenaReportModal] = useState<boolean>(false);
   const smenaReportRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+      if (typeof window !== 'undefined') {
+          return localStorage.getItem('theme') as 'light' | 'dark' || 'dark';
+      }
+      return 'dark';
+  });
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -111,6 +116,7 @@ const App: React.FC = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('theme', theme);
   }, [theme]);
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState<boolean>(false);
   const [newEmployeeName, setNewEmployeeName] = useState<string>('');
@@ -167,18 +173,18 @@ const App: React.FC = () => {
 
   const renderAdminPasswordModal = () => (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 animate-fade-in">
-      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-2xl w-80 text-center relative">
-        <h4 className="text-gray-300 font-bold mb-6 border-b border-gray-600 pb-2">Вход в панель администратора</h4>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl w-80 text-center relative">
+        <h4 className="text-gray-700 dark:text-gray-300 font-bold mb-6 border-b border-gray-300 dark:border-gray-600 pb-2">Вход в панель администратора</h4>
         <input 
           type="password"
           value={adminPassword}
           onChange={(e) => setAdminPassword(e.target.value)}
-          className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg mb-4"
+          className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg mb-4"
           placeholder="Введите пароль"
         />
         <div className="flex gap-4">
-          <button onClick={handleAdminPasswordSubmit} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">ОК</button>
-          <button onClick={() => setShowAdminPasswordModal(false)} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all">Назад</button>
+          <button onClick={handleAdminPasswordSubmit} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-98">ОК</button>
+          <button onClick={() => setShowAdminPasswordModal(false)} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
         </div>
       </div>
     </div>
@@ -186,18 +192,18 @@ const App: React.FC = () => {
 
   const renderAddEmployeeModal = () => (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 animate-fade-in">
-      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-2xl w-80 text-center relative">
-        <h4 className="text-gray-300 font-bold mb-6 border-b border-gray-600 pb-2">Добавление авиатехника</h4>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl w-80 text-center relative">
+        <h4 className="text-gray-700 dark:text-gray-300 font-bold mb-6 border-b border-gray-300 dark:border-gray-600 pb-2">Добавление авиатехника</h4>
         <input 
           type="text"
           value={newEmployeeName}
           onChange={(e) => setNewEmployeeName(e.target.value)}
-          className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg mb-4"
+          className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg mb-4"
           placeholder="Ф. И. О. сотрудника"
         />
         <div className="flex gap-4">
-          <button onClick={handleAddEmployee} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">Добавить</button>
-          <button onClick={() => setShowAddEmployeeModal(false)} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all">Отмена</button>
+          <button onClick={handleAddEmployee} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-98">Добавить</button>
+          <button onClick={() => setShowAddEmployeeModal(false)} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-98">Отмена</button>
         </div>
       </div>
     </div>
@@ -205,18 +211,18 @@ const App: React.FC = () => {
 
   const renderDeleteEmployeeModal = () => (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 animate-fade-in">
-      <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-2xl w-96 text-center relative">
-        <h4 className="text-gray-300 font-bold mb-6 border-b border-gray-600 pb-2">Удаление авиатехника</h4>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl w-96 text-center relative">
+        <h4 className="text-gray-700 dark:text-gray-300 font-bold mb-6 border-b border-gray-300 dark:border-gray-600 pb-2">Удаление авиатехника</h4>
         <div className="flex flex-col gap-4 mb-6">
           {employees.map(emp => (
-            <button key={emp} onClick={() => setEmployeeToDelete(emp)} className={`w-full text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all ${employeeToDelete === emp ? 'bg-red-700 ring-2 ring-red-400' : 'bg-red-900/80 hover:bg-red-800'}`}>
+            <button key={emp} onClick={() => setEmployeeToDelete(emp)} className={`w-full text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all active:scale-98 ${employeeToDelete === emp ? 'bg-red-700 ring-2 ring-red-400' : 'bg-red-900/80 hover:bg-red-800'}`}>
               {emp}
             </button>
           ))}
         </div>
         <div className="flex gap-4">
-          <button onClick={handleDeleteEmployee} disabled={!employeeToDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">Удалить</button>
-          <button onClick={() => {setShowDeleteEmployeeModal(false); setEmployeeToDelete(null);}} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all">Отмена</button>
+          <button onClick={handleDeleteEmployee} disabled={!employeeToDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-98">Удалить</button>
+          <button onClick={() => {setShowDeleteEmployeeModal(false); setEmployeeToDelete(null);}} className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-98">Отмена</button>
         </div>
       </div>
     </div>
@@ -224,20 +230,20 @@ const App: React.FC = () => {
 
   const renderAdminPanel = () => (
     <div className="w-full max-w-4xl text-center animate-fade-in">
-      <h2 className="text-3xl font-bold text-white mb-8">Панель администратора</h2>
+      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Панель администратора</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-10">
-        <button onClick={() => document.getElementById('manual-upload-input')?.click()} className="bg-blue-700 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all">📥 Импорт базы (XLSX)</button>
+        <button onClick={() => document.getElementById('manual-upload-input')?.click()} className="bg-blue-700 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">📥 Импорт базы (XLSX)</button>
         <input type="file" id="manual-upload-input" accept=".xlsx, .xls" onChange={handleManualUpload} className="hidden" />
-        <button onClick={handleDownloadReport} className="bg-green-700 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all">💾 Скачать копию</button>
-        <button onClick={handleResetDatabase} className="bg-red-900/80 hover:bg-red-800 text-red-200 font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all border border-red-800">🔄 Полный сброс (Reset)</button>
-        <button onClick={() => setShowAddEmployeeModal(true)} className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all">👤 Добавить сотрудника</button>
-        <button onClick={() => setShowDeleteEmployeeModal(true)} className="bg-rose-800 hover:bg-rose-900 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all">🗑️ Удалить сотрудника</button>
+        <button onClick={handleDownloadReport} className="bg-green-700 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">💾 Скачать копию</button>
+        <button onClick={handleResetDatabase} className="bg-red-900/80 hover:bg-red-800 text-red-200 font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all border border-red-800 active:scale-98">🔄 Полный сброс (Reset)</button>
+        <button onClick={() => setShowAddEmployeeModal(true)} className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">👤 Добавить сотрудника</button>
+        <button onClick={() => setShowDeleteEmployeeModal(true)} className="bg-rose-800 hover:bg-rose-900 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">🗑️ Удалить сотрудника</button>
       </div>
-      <div className="max-w-2xl mx-auto text-left text-gray-400 text-sm space-y-4 mb-10">
-        <p><strong className="text-green-400">💾 Скачать копию:</strong> Эта кнопка позволяет скачать текущую версию файла базы данных (ZAMER_main_.xlsx) в том виде, в котором она хранится в вашем браузере. Это полезно для создания резервных копий.</p>
-        <p><strong className="text-red-400">🔄 Полный сброс:</strong> Эта кнопка полностью удаляет локальную базу данных из вашего браузера. После сброса приложение попытается загрузить "чистую" версию ZAMER_main_.xlsx из корневой папки. Используйте с осторожностью, так как все несохраненные данные будут потеряны.</p>
+      <div className="max-w-2xl mx-auto text-left text-gray-600 dark:text-gray-400 text-sm space-y-4 mb-10">
+        <p><strong className="text-green-600 dark:text-green-400">💾 Скачать копию:</strong> Эта кнопка позволяет скачать текущую версию файла базы данных (ZAMER_main_.xlsx) в том виде, в котором она хранится в вашем браузере. Это полезно для создания резервных копий.</p>
+        <p><strong className="text-red-600 dark:text-red-400">🔄 Полный сброс:</strong> Эта кнопка полностью удаляет локальную базу данных из вашего браузера. После сброса приложение попытается загрузить "чистую" версию ZAMER_main_.xlsx из корневой папки. Используйте с осторожностью, так как все несохраненные данные будут потеряны.</p>
       </div>
-      <button onClick={() => setCurrentScreen('selection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">Назад</button>
+      <button onClick={() => setCurrentScreen('selection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
 
       {showAddEmployeeModal && renderAddEmployeeModal()}
       {showDeleteEmployeeModal && renderDeleteEmployeeModal()}
@@ -756,18 +762,18 @@ const App: React.FC = () => {
     const tanks100 = [1, 2, 3, 4];
     return (
       <div className="w-full max-w-5xl text-center animate-fade-in">
-        <h2 className="text-3xl font-bold text-white mb-8">Выбор резервуара</h2>
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 mb-8">
-          <h3 className="text-xl text-gray-300 mb-4 text-left border-b border-gray-600 pb-2 font-bold">РГС-50</h3>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Выбор резервуара</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 mb-8">
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-50</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {tanks50.map(num => <button key={`50-${num}`} onClick={() => handleTankSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all">№{num}</button>)}
+            {tanks50.map(num => <button key={`50-${num}`} onClick={() => handleTankSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all active:scale-98">№{num}</button>)}
           </div>
-          <h3 className="text-xl text-gray-300 mb-4 text-left border-b border-gray-600 pb-2 font-bold">РГС-100</h3>
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-100</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {tanks100.map(num => <button key={`100-${num}`} onClick={() => handleTankSelect(`РГС-100 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all">№{num}</button>)}
+            {tanks100.map(num => <button key={`100-${num}`} onClick={() => handleTankSelect(`РГС-100 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all active:scale-98">№{num}</button>)}
           </div>
         </div>
-        <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg">Назад</button>
+        <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
       </div>
     );
   };
@@ -808,33 +814,33 @@ const App: React.FC = () => {
                 </div>
             </div>
         )}
-        <h2 className="text-2xl font-bold text-white mb-6">Ввод данных: {selectedTank}</h2>
-        {formError && <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">{formError}</div>}
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ввод данных: {selectedTank}</h2>
+        {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4">
           {[1, 2, 3].map(num => (
             <div key={`m${num}`} className="flex flex-col text-left">
-              <label className="text-gray-400 text-xs mb-1">Замер №{num} (мм)</label>
-              <input type="text" value={tankFormData[`m${num}` as keyof TankFormData]} onChange={(e) => handleInputChange(`m${num}` as keyof TankFormData, e.target.value)} placeholder="0000" maxLength={4} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" />
+              <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Замер №{num} (мм)</label>
+              <input type="text" value={tankFormData[`m${num}` as keyof TankFormData]} onChange={(e) => handleInputChange(`m${num}` as keyof TankFormData, e.target.value)} placeholder="0000" maxLength={4} className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
             </div>
           ))}
-          <div className="flex flex-col text-left"><label className="text-gray-400 text-xs mb-1">Плотность (г/см³)</label><input type="number" step="0.0001" value={tankFormData.density} onChange={(e) => handleInputChange('density', e.target.value)} placeholder="0.0000" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" /></div>
-          <div className="flex flex-col text-left"><label className="text-gray-400 text-xs mb-1">Температура (°C)</label><input type="number" step="0.1" value={tankFormData.temp} onChange={(e) => handleInputChange('temp', e.target.value)} placeholder="0.0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" /></div>
+          <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Плотность (г/см³)</label><input type="number" step="0.0001" value={tankFormData.density} onChange={(e) => handleInputChange('density', e.target.value)} placeholder="0.0000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" /></div>
+          <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Температура (°C)</label><input type="number" step="0.1" value={tankFormData.temp} onChange={(e) => handleInputChange('temp', e.target.value)} placeholder="0.0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" /></div>
         </div>
         <div className="flex flex-wrap justify-center gap-4 mt-8">
           <button onClick={handleSubmitTankData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">💾 Сохранить</button>
-          <button onClick={() => setCurrentScreen('fuelMeasurement')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">Назад</button>
+          <button onClick={() => setCurrentScreen('fuelMeasurement')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
         </div>
     </div>
   );
 
   const renderTzaSelection = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in">
-          <h2 className="text-3xl font-bold text-white mb-8">Выбор ТЗА</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Выбор ТЗА</h2>
           <div className="flex flex-col md:flex-row justify-center gap-6 mb-12">
               <button onClick={() => handleTzaSelect('173')} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-xl text-2xl shadow-lg transition-all active:scale-98">173</button>
               <button onClick={() => handleTzaSelect('174')} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-xl text-2xl shadow-lg transition-all active:scale-98">174</button>
           </div>
-          <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Назад</button>
+          <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all active:scale-98">Назад</button>
       </div>
   );
 
@@ -842,14 +848,14 @@ const App: React.FC = () => {
       const tanks50 = [1, 2, 3, 4, 5, 6, 7, 8];
       return (
           <div className="w-full max-w-5xl text-center animate-fade-in p-2">
-            <h2 className="text-3xl font-bold text-white mb-2">Расходный резервуар</h2>
-            <p className="text-gray-400 mb-8">Выбран ТЗА: {selectedTza}</p>
-            <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Расходный резервуар</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8">Выбран ТЗА: {selectedTza}</p>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 mb-8">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {tanks50.map(num => <button key={`50-${num}`} onClick={() => handleTzaReservoirSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all">РГС-50 №{num}</button>)}
+                {tanks50.map(num => <button key={`50-${num}`} onClick={() => handleTzaReservoirSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all active:scale-98">РГС-50 №{num}</button>)}
               </div>
             </div>
-            <button onClick={() => setCurrentScreen('tzaSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">Назад</button>
+            <button onClick={() => setCurrentScreen('tzaSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
           </div>
       );
   };
@@ -888,16 +894,16 @@ const App: React.FC = () => {
                 </div>
             </div>
         )}
-          <h2 className="text-2xl font-bold text-white mb-2">Показания счетчика</h2>
-          <p className="text-gray-400 mb-6">{selectedTza} | {selectedTzaReservoir}</p>
-          {formError && <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">{formError}</div>}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-6">
-              <div className="flex flex-col text-left"><label className="text-gray-400 text-xs mb-1">Счетчик ДО</label><input type="number" value={tzaFormData.start} onChange={(e) => setTzaFormData(p => ({...p, start: e.target.value}))} placeholder="000000" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-xl font-mono" /></div>
-              <div className="flex flex-col text-left"><label className="text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label><input type="number" value={tzaFormData.end} onChange={(e) => setTzaFormData(p => ({...p, end: e.target.value}))} placeholder="000000" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-xl font-mono" /></div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Показания счетчика</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">{selectedTza} | {selectedTzaReservoir}</p>
+          {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6">
+              <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ДО</label><input type="number" value={tzaFormData.start} onChange={(e) => setTzaFormData(p => ({...p, start: e.target.value}))} placeholder="000000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-xl font-mono" /></div>
+              <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label><input type="number" value={tzaFormData.end} onChange={(e) => setTzaFormData(p => ({...p, end: e.target.value}))} placeholder="000000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-xl font-mono" /></div>
           </div>
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <button onClick={handleSubmitTzaData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Внести данные</button>
-            <button onClick={() => setCurrentScreen('tzaReservoirSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Назад</button>
+            <button onClick={() => setCurrentScreen('tzaReservoirSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all active:scale-98">Назад</button>
           </div>
       </div>
   );
@@ -907,18 +913,18 @@ const App: React.FC = () => {
     const tanks100 = [1, 2, 3, 4];
     return (
       <div className="w-full max-w-5xl text-center animate-fade-in">
-        <h2 className="text-3xl font-bold text-white mb-8">Выбор приемного резервуара</h2>
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 mb-8">
-          <h3 className="text-xl text-gray-300 mb-4 text-left border-b border-gray-600 pb-2 font-bold">РГС-50</h3>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Выбор приемного резервуара</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 mb-8">
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-50</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {tanks50.map(num => <button key={`priem-50-${num}`} onClick={() => handlePriemTankSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all">№{num}</button>)}
+            {tanks50.map(num => <button key={`priem-50-${num}`} onClick={() => handlePriemTankSelect(`РГС-50 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all active:scale-98">№{num}</button>)}
           </div>
-          <h3 className="text-xl text-gray-300 mb-4 text-left border-b border-gray-600 pb-2 font-bold">РГС-100</h3>
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-100</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {tanks100.map(num => <button key={`priem-100-${num}`} onClick={() => handlePriemTankSelect(`РГС-100 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all">№{num}</button>)}
+            {tanks100.map(num => <button key={`priem-100-${num}`} onClick={() => handlePriemTankSelect(`РГС-100 №${num}`)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-lg transition-all active:scale-98">№{num}</button>)}
           </div>
         </div>
-        <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg">Назад</button>
+        <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
       </div>
     );
   };
@@ -957,34 +963,34 @@ const App: React.FC = () => {
                 </div>
             </div>
         )}
-        <h2 className="text-2xl font-bold text-white mb-2">Ввод счетчиков (Прием)</h2>
-        <p className="text-gray-400 mb-6">{selectedPriemTank}</p>
-        {formError && <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">{formError}</div>}
-        <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Ввод счетчиков (Прием)</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">{selectedPriemTank}</p>
+        {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6">
             <div className="flex flex-col text-left">
-                <label className="text-gray-400 text-xs mb-1">Счетчик ДО</label>
-                <input type="number" step="1" value={priemFormData.start} onChange={(e) => setPriemFormData(p => ({...p, start: e.target.value}))} placeholder="0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-xl font-mono" />
+                <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ДО</label>
+                <input type="number" step="1" value={priemFormData.start} onChange={(e) => setPriemFormData(p => ({...p, start: e.target.value}))} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-xl font-mono" />
             </div>
             <div className="flex flex-col text-left">
-                <label className="text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label>
-                <input type="number" step="1" value={priemFormData.end} onChange={(e) => setPriemFormData(p => ({...p, end: e.target.value}))} placeholder="0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-xl font-mono" />
+                <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label>
+                <input type="number" step="1" value={priemFormData.end} onChange={(e) => setPriemFormData(p => ({...p, end: e.target.value}))} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-xl font-mono" />
             </div>
         </div>
         <div className="flex flex-wrap justify-center gap-4 mt-8">
           <button onClick={handleSubmitPriemData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Внести данные</button>
-          <button onClick={() => setCurrentScreen('priemReservoirSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Назад</button>
+          <button onClick={() => setCurrentScreen('priemReservoirSelection')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
         </div>
     </div>
   );
 
   const renderVsTzaSelection = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in">
-          <h2 className="text-3xl font-bold text-white mb-8">Выбор ТЗА (Выдача в ВС)</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Выбор ТЗА (Выдача в ВС)</h2>
           <div className="flex flex-col md:flex-row justify-center gap-6 mb-12">
               <button onClick={() => handleVsTzaSelect('173')} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-xl text-2xl shadow-lg transition-all active:scale-98">173</button>
               <button onClick={() => handleVsTzaSelect('174')} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-xl text-2xl shadow-lg transition-all active:scale-98">174</button>
           </div>
-          <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Назад</button>
+          <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all active:scale-98">Назад</button>
       </div>
   );
 
@@ -1024,30 +1030,30 @@ const App: React.FC = () => {
                 </div>
             </div>
         )}
-          <h2 className="text-2xl font-bold text-white mb-2">Выдача в ВС</h2>
-          <p className="text-gray-400 mb-6">Выбран ТЗА: {selectedVsTza}</p>
-          {formError && <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">{formError}</div>}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Выдача в ВС</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">Выбран ТЗА: {selectedVsTza}</p>
+          {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4">
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Номер контрольного талона</label>
-                  <input type="number" value={vsFormData.coupon} onChange={(e) => setVsFormData(p => ({...p, coupon: e.target.value}))} placeholder="0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Номер контрольного талона</label>
+                  <input type="number" value={vsFormData.coupon} onChange={(e) => setVsFormData(p => ({...p, coupon: e.target.value}))} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
               </div>
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Счетчик ДО</label>
-                  <input type="number" value={vsFormData.start} onChange={(e) => setVsFormData(p => ({...p, start: e.target.value}))} placeholder="0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg font-mono" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ДО</label>
+                  <input type="number" value={vsFormData.start} onChange={(e) => setVsFormData(p => ({...p, start: e.target.value}))} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg font-mono" />
               </div>
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label>
-                  <input type="number" value={vsFormData.end} onChange={(e) => setVsFormData(p => ({...p, end: e.target.value}))} placeholder="0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg font-mono" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Счетчик ПОСЛЕ</label>
+                  <input type="number" value={vsFormData.end} onChange={(e) => setVsFormData(p => ({...p, end: e.target.value}))} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg font-mono" />
               </div>
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Плотность талона (г/см³)</label>
-                  <input type="number" step="0.0001" value={vsFormData.density} onChange={(e) => setVsFormData(p => ({...p, density: e.target.value}))} placeholder="0.0000" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Плотность талона (г/см³)</label>
+                  <input type="number" step="0.0001" value={vsFormData.density} onChange={(e) => setVsFormData(p => ({...p, density: e.target.value}))} placeholder="0.0000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
               </div>
           </div>
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <button onClick={handleSubmitVsData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Внести данные</button>
-            <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Отменить</button>
+            <button onClick={() => setCurrentScreen('mainMenu')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all active:scale-98">Отменить</button>
           </div>
       </div>
   );
@@ -1092,20 +1098,20 @@ const App: React.FC = () => {
                 </div>
             </div>
           )}
-          <h2 className="text-2xl font-bold text-white mb-4">Замеры железнодорожной цистерны</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Замеры железнодорожной цистерны</h2>
           
-          {formError && <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded-lg text-red-200">{formError}</div>}
+          {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
           
-          <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4">
               {/* Type Selection */}
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-2">Тип вагона</label>
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-2">Тип вагона</label>
                   <div className="flex flex-wrap gap-2 justify-between">
                       {['66', '72', '81', '90', '92'].map((type) => (
                           <button 
                             key={type} 
                             onClick={() => handleJdcTypeSelect(type)}
-                            className={`flex-1 py-2 px-1 rounded font-bold text-sm transition-all ${jdcFormData.type === type ? 'bg-indigo-600 text-white ring-2 ring-indigo-400' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                            className={`flex-1 py-2 px-1 rounded font-bold text-sm transition-all ${jdcFormData.type === type ? 'bg-indigo-600 text-white ring-2 ring-indigo-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                           >
                               {type}
                           </button>
@@ -1114,32 +1120,31 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Номер вагона</label>
-                  <input type="text" value={jdcFormData.number} onChange={(e) => handleJdcInputChange('number', e.target.value)} placeholder="00000000" maxLength={8} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg font-mono" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Номер вагона</label>
+                  <input type="text" value={jdcFormData.number} onChange={(e) => handleJdcInputChange('number', e.target.value)} placeholder="00000000" maxLength={8} className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg font-mono" />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                   {[1, 2, 3].map(num => (
                     <div key={`m${num}`} className="flex flex-col text-left">
-                      <label className="text-gray-400 text-xs mb-1">Замер №{num}</label>
-                      <input type="text" value={jdcFormData[`m${num}` as keyof JdcFormData]} onChange={(e) => handleJdcInputChange(`m${num}` as keyof JdcFormData, e.target.value)} placeholder="0000" maxLength={4} className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg text-center" />
+                      <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Замер №{num}</label>
+                      <input type="text" value={jdcFormData[`m${num}` as keyof JdcFormData]} onChange={(e) => handleJdcInputChange(`m${num}` as keyof JdcFormData, e.target.value)} placeholder="0000" maxLength={4} className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg text-center" />
                     </div>
                   ))}
               </div>
 
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Плотность ГСМ (г/см³)</label>
-                  <input type="number" step="0.0001" value={jdcFormData.density} onChange={(e) => handleJdcInputChange('density', e.target.value)} placeholder="0.0000" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Плотность ГСМ (г/см³)</label>
+                  <input type="number" step="0.0001" value={jdcFormData.density} onChange={(e) => handleJdcInputChange('density', e.target.value)} placeholder="0.0000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
               </div>
               <div className="flex flex-col text-left">
-                  <label className="text-gray-400 text-xs mb-1">Температура (°C)</label>
-                  <input type="number" step="0.1" value={jdcFormData.temp} onChange={(e) => handleJdcInputChange('temp', e.target.value)} placeholder="00.0" className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 text-lg" />
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Температура (°C)</label>
+                  <input type="number" step="0.1" value={jdcFormData.temp} onChange={(e) => handleJdcInputChange('temp', e.target.value)} placeholder="00.0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
               </div>
           </div>
-
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <button onClick={handleSubmitJdcData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Внести данные</button>
-            <button onClick={handleJdcBack} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all">Назад</button>
+            <button onClick={handleJdcBack} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
           </div>
       </div>
   );
@@ -1205,36 +1210,36 @@ const App: React.FC = () => {
                       </div>
                   </div>
               )}
-              <h2 className="text-3xl font-bold text-white mb-8">Отчет: Остатки на складе</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчет: Остатки на складе</h2>
               
               <div className="flex flex-col gap-4 mb-8">
                   <button 
                       onClick={() => handleReportGroupSelect('all')}
-                      className={`py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                      className={`py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                   >
                       Остатки по всем РГС
                   </button>
                   <div className="flex gap-4">
                       <button 
                           onClick={() => handleReportGroupSelect('all50')}
-                          className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all50' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                          className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all50' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                           Остатки по РГС-50
                       </button>
                       <button 
                           onClick={() => handleReportGroupSelect('all100')}
-                          className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all100' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                          className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all ${reportSelectionType === 'all100' ? 'bg-indigo-600 ring-4 ring-indigo-400 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                       >
                           Остатки по РГС-100
                       </button>
                   </div>
               </div>
 
-              <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 mb-8">
-                  <h3 className="text-xl text-gray-300 mb-4 text-left border-b border-gray-600 pb-2 font-bold">Выбор отдельных резервуаров</h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 mb-8">
+                  <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">Выбор отдельных резервуаров</h3>
                   
                   <div className="mb-6">
-                      <h4 className="text-gray-400 text-sm mb-2 text-left">РГС-50</h4>
+                      <h4 className="text-gray-500 dark:text-gray-400 text-sm mb-2 text-left">РГС-50</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {tanks50.map(num => {
                               const name = `РГС-50 №${num}`;
@@ -1246,8 +1251,8 @@ const App: React.FC = () => {
                                       onClick={() => handleReportTankToggle(name)}
                                       disabled={isDisabled}
                                       className={`py-3 rounded-lg font-semibold transition-all ${
-                                          isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-700 text-gray-500' :
-                                          isSelected ? 'bg-teal-600 text-white ring-2 ring-teal-400' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                          isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' :
+                                          isSelected ? 'bg-teal-600 text-white ring-2 ring-teal-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                       }`}
                                   >
                                       №{num}
@@ -1258,7 +1263,7 @@ const App: React.FC = () => {
                   </div>
 
                   <div>
-                      <h4 className="text-gray-400 text-sm mb-2 text-left">РГС-100</h4>
+                      <h4 className="text-gray-500 dark:text-gray-400 text-sm mb-2 text-left">РГС-100</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {tanks100.map(num => {
                               const name = `РГС-100 №${num}`;
@@ -1270,8 +1275,8 @@ const App: React.FC = () => {
                                       onClick={() => handleReportTankToggle(name)}
                                       disabled={isDisabled}
                                       className={`py-3 rounded-lg font-semibold transition-all ${
-                                          isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-700 text-gray-500' :
-                                          isSelected ? 'bg-teal-600 text-white ring-2 ring-teal-400' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                          isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' :
+                                          isSelected ? 'bg-teal-600 text-white ring-2 ring-teal-400' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                       }`}
                                   >
                                       №{num}
@@ -1345,7 +1350,7 @@ const App: React.FC = () => {
               </div>
           )}
 
-          <h2 className="text-3xl font-bold text-white mb-8">Отчет по приходам</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчет по приходам</h2>
           <div className="mb-8">
               <Calendar selectedDates={selectedReportDates} onSelect={setSelectedReportDates} />
           </div>
@@ -1408,7 +1413,7 @@ const App: React.FC = () => {
               </div>
           )}
 
-          <h2 className="text-3xl font-bold text-white mb-8">Отчет по выдаче в ТЗА</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчет по выдаче в ТЗА</h2>
           <div className="mb-8">
               <Calendar selectedDates={selectedReportDates} onSelect={setSelectedReportDates} />
           </div>
@@ -1471,7 +1476,7 @@ const App: React.FC = () => {
               </div>
           )}
 
-          <h2 className="text-3xl font-bold text-white mb-8">Отчет по выдаче в ВС</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчет по выдаче в ВС</h2>
           <div className="mb-8">
               <Calendar selectedDates={selectedReportDates} onSelect={setSelectedReportDates} />
           </div>
@@ -1563,7 +1568,7 @@ const App: React.FC = () => {
               </div>
           )}
 
-          <h2 className="text-3xl font-bold text-white mb-8">Сменный отчет</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Сменный отчет</h2>
           <div className="mb-8">
               <Calendar selectedDates={selectedReportDates} onSelect={setSelectedReportDates} />
           </div>
