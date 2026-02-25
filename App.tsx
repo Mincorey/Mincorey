@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { createNewWorkbook, workbookToArrayBuffer, addShiftEntry, deleteShiftEntry, findShiftRowForToday, saveTankMeasurements, saveExcelFile, getTankMeasurements, saveTzaIssue, saveFuelReceipt, saveVsIssue, findUnclosedShift, closeShiftEntry, saveJdcMeasurement, generateBalanceReport, getBalanceReportData, getPriemReportData, getTzaReportData, getVsReportData, getSmenaReportData } from './excelUtils';
+import { createNewWorkbook, workbookToArrayBuffer, addShiftEntry, deleteShiftEntry, findShiftRowForToday, saveTankMeasurements, saveExcelFile, getTankMeasurements, saveTzaIssue, saveFuelReceipt, saveVsIssue, findUnclosedShift, closeShiftEntry, saveJdcMeasurement, generateBalanceReport, getBalanceReportData, getPriemReportData, getTzaReportData, getVsReportData, getSmenaReportData, ensureInventorySheet, saveRk1Measurement, ensureRk1Sheet, getInventoryMeasurementsData, generateInventoryMeasurementsReport } from './excelUtils';
 import { saveFileToDB, loadFileFromDB, clearFileFromDB } from './storageUtils';
 import ExcelJS from 'exceljs';
 import { shareElementAsImage, saveElementAsImage } from './shareUtils';
 import Calendar from './Calendar';
 // Типы экранов приложения
-type Screen = 'selection' | 'mainMenu' | 'fuelMeasurement' | 'tankEntry' | 'tzaSelection' | 'tzaReservoirSelection' | 'tzaEntry' | 'priemReservoirSelection' | 'priemEntry' | 'vsTzaSelection' | 'vsEntry' | 'jdcEntry' | 'reportsMenu' | 'reportOstatki' | 'reportPriem' | 'reportTza' | 'reportVs' | 'reportSmena' | 'adminPanel';
+type Screen = 'selection' | 'mainMenu' | 'fuelMeasurement' | 'tankEntry' | 'tzaSelection' | 'tzaReservoirSelection' | 'tzaEntry' | 'priemReservoirSelection' | 'priemEntry' | 'vsTzaSelection' | 'vsEntry' | 'jdcEntry' | 'reportsMenu' | 'reportOstatki' | 'reportPriem' | 'reportTza' | 'reportVs' | 'reportSmena' | 'adminPanel' | 'inventoryMeasurement' | 'inventoryTankEntry' | 'inventoryRk1Entry' | 'inventoryReportMenu' | 'inventoryReportMeasurements';
 
 // Интерфейс для данных формы замера
 interface TankFormData {
@@ -97,12 +97,22 @@ const App: React.FC = () => {
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const tankResultRef = useRef<HTMLDivElement>(null);
 
+  const [rk1Measurement, setRk1Measurement] = useState<string>('');
+  const [rk1Result, setRk1Result] = useState<{ volume: number; mass: number; avgDensity: number } | null>(null);
+  const [showRk1ResultModal, setShowRk1ResultModal] = useState<boolean>(false);
+  const rk1ResultRef = useRef<HTMLDivElement>(null);
+
   const [showAdminPasswordModal, setShowAdminPasswordModal] = useState<boolean>(false);
   const [adminPassword, setAdminPassword] = useState<string>('');
   
   const [smenaReportData, setSmenaReportData] = useState<{ rows: any[], totals: any } | null>(null);
   const [showSmenaReportModal, setShowSmenaReportModal] = useState<boolean>(false);
   const smenaReportRef = useRef<HTMLDivElement>(null);
+
+  const [inventoryReportData, setInventoryReportData] = useState<any>(null);
+  const [showInventoryReportModal, setShowInventoryReportModal] = useState<boolean>(false);
+  const inventoryReportRef = useRef<HTMLDivElement>(null);
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
       if (typeof window !== 'undefined') {
           return localStorage.getItem('theme') as 'light' | 'dark' || 'dark';
@@ -238,6 +248,8 @@ const App: React.FC = () => {
         <button onClick={handleResetDatabase} className="bg-red-900/80 hover:bg-red-800 text-red-200 font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all border border-red-800 active:scale-98">🔄 Полный сброс (Reset)</button>
         <button onClick={() => setShowAddEmployeeModal(true)} className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">👤 Добавить сотрудника</button>
         <button onClick={() => setShowDeleteEmployeeModal(true)} className="bg-rose-800 hover:bg-rose-900 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98">🗑️ Удалить сотрудника</button>
+        <button onClick={() => setCurrentScreen('inventoryMeasurement')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98 md:col-span-2">📋 Инвентаризация</button>
+        <button onClick={() => setCurrentScreen('inventoryReportMenu')} className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition-all active:scale-98 md:col-span-2">📊 Отчет по инвентаризации</button>
       </div>
       <div className="max-w-2xl mx-auto text-left text-gray-600 dark:text-gray-400 text-sm space-y-4 mb-10">
         <p><strong className="text-green-600 dark:text-green-400">💾 Скачать копию:</strong> Эта кнопка позволяет скачать текущую версию файла базы данных (ZAMER_main_.xlsx) в том виде, в котором она хранится в вашем браузере. Это полезно для создания резервных копий.</p>
@@ -308,6 +320,14 @@ const App: React.FC = () => {
         if (!wb) {
              console.log("Создаем новый пустой файл");
              wb = createNewWorkbook();
+             await persistWorkbook(wb);
+        }
+
+        const inventoryUpdated = ensureInventorySheet(wb);
+        const rk1Updated = ensureRk1Sheet(wb);
+        
+        if (inventoryUpdated || rk1Updated) {
+             console.log("Workbook structure updated, saving...");
              await persistWorkbook(wb);
         }
 
@@ -560,6 +580,51 @@ const App: React.FC = () => {
     }
   };
 
+  const handleInventoryTankSelect = (tankName: string) => {
+    setSelectedTank(tankName);
+    setFormError('');
+    if (workbook) {
+        const existingData = getTankMeasurements(workbook, tankName, 'Zamer_INVENT');
+        setTankFormData(existingData);
+    }
+    setCurrentScreen('inventoryTankEntry');
+  };
+
+  const handleInventorySubmit = () => {
+    const { m1, m2, m3 } = tankFormData;
+    const digitRegex = /^\d{1,4}$/;
+    if (!digitRegex.test(m1) || !digitRegex.test(m2) || !digitRegex.test(m3)) {
+      setFormError("Замеры должны быть числом (1-4 цифры)");
+      return;
+    }
+    if (workbook) {
+        const result = saveTankMeasurements(workbook, selectedTank, tankFormData, 'Zamer_INVENT');
+        persistWorkbook(workbook);
+        if (result) {
+            setCalculationResult(result);
+            setShowResultModal(true);
+        }
+    }
+  };
+
+  const handleRk1Save = () => {
+    const digitRegex = /^\d{1,5}$/;
+    if (!digitRegex.test(rk1Measurement)) {
+        setFormError("Замер должен быть числом");
+        return;
+    }
+    if (workbook) {
+        const result = saveRk1Measurement(workbook, parseInt(rk1Measurement));
+        persistWorkbook(workbook);
+        if (result) {
+            setRk1Result(result);
+            setShowRk1ResultModal(true);
+        } else {
+            setFormError("Ошибка сохранения или лист RK_1 не найден");
+        }
+    }
+  };
+
   const handleTzaSelect = (tza: string) => {
       setSelectedTza(tza);
       setCurrentScreen('tzaReservoirSelection');
@@ -746,6 +811,7 @@ const App: React.FC = () => {
         <button onClick={() => setCurrentScreen('tzaSelection')} className="w-64 bg-white dark:bg-blue-600 hover:bg-gray-100 dark:hover:bg-blue-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-6 rounded-xl shadow-sm dark:shadow-lg transform hover:scale-102 transition-all">🚛 Выдача в ТЗА</button>
         <button onClick={() => setCurrentScreen('vsTzaSelection')} className="w-64 bg-white dark:bg-blue-600 hover:bg-gray-100 dark:hover:bg-blue-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-6 rounded-xl shadow-sm dark:shadow-lg transform hover:scale-102 transition-all">✈️ Выдача в ВС</button>
         <button onClick={() => setCurrentScreen('jdcEntry')} className="w-64 bg-white dark:bg-blue-600 hover:bg-gray-100 dark:hover:bg-blue-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-6 rounded-xl shadow-sm dark:shadow-lg transform hover:scale-102 transition-all">🚂 Замер ЖДЦ</button>
+        <button onClick={() => setCurrentScreen('reportsMenu')} className="w-64 bg-white dark:bg-teal-600 hover:bg-gray-100 dark:hover:bg-teal-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-6 rounded-xl shadow-sm dark:shadow-lg transform hover:scale-102 transition-all">📊 Отчеты/Журналы</button>
       </div>
       <div className="flex flex-col items-center gap-2 mt-4 pt-2 border-t border-gray-300 dark:border-gray-700">
         <button onClick={handleDownloadReport} className="w-60 bg-white dark:bg-teal-600 hover:bg-gray-100 dark:hover:bg-teal-700 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-2 px-6 rounded-lg shadow-sm dark:shadow-md transition-all flex items-center justify-center gap-2 transform hover:scale-102">
@@ -777,6 +843,81 @@ const App: React.FC = () => {
       </div>
     );
   };
+
+  const renderInventoryMeasurementScreen = () => {
+    const tanks50 = [1, 2, 3, 4, 5, 6, 7, 8];
+    const tanks100 = [1, 2, 3, 4];
+    return (
+      <div className="w-full max-w-5xl text-center animate-fade-in">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Инвентаризация: Выбор резервуара</h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 mb-8">
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-50</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {tanks50.map(num => <button key={`50-${num}`} onClick={() => handleInventoryTankSelect(`РГС-50 №${num}`)} className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all active:scale-98">№{num}</button>)}
+          </div>
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold">РГС-100</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {tanks100.map(num => <button key={`100-${num}`} onClick={() => handleInventoryTankSelect(`РГС-100 №${num}`)} className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all active:scale-98">№{num}</button>)}
+          </div>
+          <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4 text-left border-b border-gray-300 dark:border-gray-600 pb-2 font-bold mt-8">Дополнительно</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <button onClick={() => { setRk1Measurement(''); setFormError(''); setCurrentScreen('inventoryRk1Entry'); }} className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 rounded-lg shadow-md transition-all active:scale-98">РК-1</button>
+          </div>
+        </div>
+        <button onClick={() => setCurrentScreen('adminPanel')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
+      </div>
+    );
+  };
+
+  const renderInventoryRk1Entry = () => (
+      <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
+          {showRk1ResultModal && rk1Result && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
+                  <div className="bg-gray-800 border border-teal-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
+                      <div ref={rk1ResultRef} className="bg-gray-800 p-4 rounded-xl">
+                          <h3 className="text-2xl font-bold text-white mb-6">Результаты инвентаризации РК-1</h3>
+                          <div className="space-y-4 text-left text-lg">
+                              <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Замер:</span><span className="font-bold text-white">{rk1Measurement} мм</span></div>
+                              <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Объем:</span><span className="font-bold text-blue-400">{rk1Result.volume} л</span></div>
+                              <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Ср. плотность:</span><span className="font-bold text-white">{rk1Result.avgDensity.toFixed(4)} г/см³</span></div>
+                              <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Масса:</span><span className="font-bold text-green-400">{rk1Result.mass} кг</span></div>
+                          </div>
+                      </div>
+                      <div className="flex flex-col gap-3 mt-8">
+                          <div className="flex gap-3">
+                              <button onClick={() => rk1ResultRef.current && shareElementAsImage(rk1ResultRef.current, `Invent_RK1.png`)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98 flex items-center justify-center gap-2">
+                                 📤 Отправить
+                              </button>
+                              <button onClick={() => rk1ResultRef.current && saveElementAsImage(rk1ResultRef.current, `Invent_RK1.png`)} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98 flex items-center justify-center gap-2">
+                                 💾 Сохранить
+                              </button>
+                          </div>
+                          <button onClick={() => {
+                              const text = `РК-1 (Инвентаризация)\nЗамер\t\t${rk1Measurement} мм.\nОбъем\t\t${rk1Result.volume} л.\nСр. плотность\t${rk1Result.avgDensity.toFixed(4)} г/см. куб.\nМасса\t\t${rk1Result.mass} кг.`;
+                              copyToClipboard(text);
+                          }} className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98 flex items-center justify-center gap-2">
+                              📋 Скопировать текст
+                          </button>
+                          <button onClick={() => { setShowRk1ResultModal(false); setCurrentScreen('inventoryMeasurement'); }} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98">Закрыть</button>
+                      </div>
+                  </div>
+              </div>
+          )}
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Инвентаризация: РК-1</h2>
+          {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+              <div className="flex flex-col text-left">
+                  <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Замер РК-1 в мм.</label>
+                  <input type="text" value={rk1Measurement} onChange={(e) => setRk1Measurement(e.target.value)} placeholder="0000" maxLength={5} className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
+              </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <button onClick={handleRk1Save} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">💾 Сохранить</button>
+              <button onClick={() => setCurrentScreen('inventoryMeasurement')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
+          </div>
+      </div>
+  );
 
   const renderTankEntryScreen = () => (
     <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
@@ -829,6 +970,61 @@ const App: React.FC = () => {
         <div className="flex flex-wrap justify-center gap-4 mt-8">
           <button onClick={handleSubmitTankData} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">💾 Сохранить</button>
           <button onClick={() => setCurrentScreen('fuelMeasurement')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
+        </div>
+    </div>
+  );
+
+  const renderInventoryTankEntryScreen = () => (
+    <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
+        {showResultModal && calculationResult && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
+                <div className="bg-gray-800 border border-teal-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
+                    <div ref={tankResultRef} className="bg-gray-800 p-4 rounded-xl">
+                        <h3 className="text-2xl font-bold text-white mb-6">Результаты инвентаризации</h3>
+                        <div className="space-y-4 text-left text-lg">
+                            <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Резервуар:</span><span className="font-bold text-teal-400">{selectedTank}</span></div>
+                            <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Плотность:</span><span className="font-bold text-white">{tankFormData.density} г/см³</span></div>
+                            <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Ср. взлив:</span><span className="font-bold text-white">{calculationResult.average} мм</span></div>
+                            <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Объем:</span><span className="font-bold text-blue-400">{calculationResult.volume} л</span></div>
+                            <div className="flex justify-between border-b border-gray-700 pb-2"><span className="text-gray-400">Масса:</span><span className="font-bold text-green-400">{calculationResult.mass} кг</span></div>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-3 mt-8">
+                        <div className="flex gap-3">
+                            <button onClick={() => tankResultRef.current && shareElementAsImage(tankResultRef.current, `Invent_${selectedTank}.png`)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98 flex items-center justify-center gap-2">
+                               📤 Отправить
+                            </button>
+                            <button onClick={() => tankResultRef.current && saveElementAsImage(tankResultRef.current, `Invent_${selectedTank}.png`)} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98 flex items-center justify-center gap-2">
+                               💾 Сохранить
+                            </button>
+                        </div>
+                        <button onClick={() => {
+                            const text = `${selectedTank} (Инвентаризация)\nЗамер ср.\t${calculationResult.average} мм.\nПлотность\t${tankFormData.density} г/см. куб.\nТемпература\t${tankFormData.temp} гр. Ц.\nОбъем\t\t${calculationResult.volume} л.\nМасса\t\t${calculationResult.mass} кг.`;
+                            copyToClipboard(text);
+                        }} className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98 flex items-center justify-center gap-2">
+                            📋 Скопировать текст
+                        </button>
+                        <button onClick={() => { setShowResultModal(false); setCurrentScreen('inventoryMeasurement'); }} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all active:scale-98">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        )}
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Инвентаризация: {selectedTank}</h2>
+        {formError && <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200">{formError}</div>}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg dark:shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+          {[1, 2, 3].map(num => (
+            <div key={`m${num}`} className="flex flex-col text-left">
+              <label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Замер №{num} (мм)</label>
+              <input type="text" value={tankFormData[`m${num}` as keyof TankFormData]} onChange={(e) => handleInputChange(`m${num}` as keyof TankFormData, e.target.value)} placeholder="0000" maxLength={4} className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" />
+            </div>
+          ))}
+          <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Плотность (г/см³)</label><input type="number" step="0.0001" value={tankFormData.density} onChange={(e) => handleInputChange('density', e.target.value)} placeholder="0.0000" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" /></div>
+          <div className="flex flex-col text-left"><label className="text-gray-500 dark:text-gray-400 text-xs mb-1">Температура (°C)</label><input type="number" step="0.1" value={tankFormData.temp} onChange={(e) => handleInputChange('temp', e.target.value)} placeholder="0.0" className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-lg" /></div>
+        </div>
+        <div className="flex flex-wrap justify-center gap-4 mt-8">
+          <button onClick={handleInventorySubmit} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">💾 Сохранить</button>
+          <button onClick={() => setCurrentScreen('inventoryMeasurement')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-98">Назад</button>
         </div>
     </div>
   );
@@ -1579,6 +1775,97 @@ const App: React.FC = () => {
       </div>
   );
 
+  const handleGenerateInventoryMeasurementsReport = () => {
+    if (!workbook) return;
+    const data = getInventoryMeasurementsData(workbook);
+    setInventoryReportData(data);
+    setShowInventoryReportModal(true);
+  };
+
+  const renderInventoryReportMenu = () => (
+      <div className="w-full max-w-md text-center animate-fade-in p-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчет по инвентаризации</h2>
+          <div className="flex flex-col gap-4">
+              <button onClick={handleGenerateInventoryMeasurementsReport} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transform hover:scale-102 transition-all flex items-center justify-center gap-3">
+                  📊 Отчет по замерам инвентаризации
+              </button>
+              <button className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg opacity-50 cursor-not-allowed flex items-center justify-center gap-3">
+                  📉 Остатки на дату инвентаризации (В разработке)
+              </button>
+              <button onClick={() => setCurrentScreen('adminPanel')} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all mt-4">
+                  Назад
+              </button>
+          </div>
+          
+          {showInventoryReportModal && inventoryReportData && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm" onClick={() => setShowInventoryReportModal(false)}></div>
+                  <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
+                      <div ref={inventoryReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
+                          <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Итоги инвентаризации</h3>
+                          
+                          <div className="space-y-6">
+                              <div className="bg-gray-700 p-4 rounded-lg">
+                                  <h4 className="text-lg font-bold text-green-400 mb-2">РГС-50</h4>
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div className="text-gray-400">Объем:</div><div className="text-white text-right">{inventoryReportData.total50.volume} л</div>
+                                      <div className="text-gray-400">Масса:</div><div className="text-white text-right">{inventoryReportData.total50.mass} кг</div>
+                                  </div>
+                              </div>
+
+                              <div className="bg-gray-700 p-4 rounded-lg">
+                                  <h4 className="text-lg font-bold text-green-400 mb-2">РГС-100</h4>
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div className="text-gray-400">Объем:</div><div className="text-white text-right">{inventoryReportData.total100.volume} л</div>
+                                      <div className="text-gray-400">Масса:</div><div className="text-white text-right">{inventoryReportData.total100.mass} кг</div>
+                                  </div>
+                              </div>
+
+                              <div className="bg-gray-700 p-4 rounded-lg">
+                                  <h4 className="text-lg font-bold text-yellow-400 mb-2">РК-1</h4>
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div className="text-gray-400">Взлив:</div><div className="text-white text-right">{inventoryReportData.rk1.measurement} мм</div>
+                                      <div className="text-gray-400">Объем:</div><div className="text-white text-right">{inventoryReportData.rk1.volume} л</div>
+                                      <div className="text-gray-400">Масса:</div><div className="text-white text-right">{inventoryReportData.rk1.mass} кг</div>
+                                  </div>
+                              </div>
+
+                              <div className="bg-gray-900 p-4 rounded-lg border border-blue-500">
+                                  <h4 className="text-xl font-bold text-blue-400 mb-3 text-center">ИТОГО (с РК-1)</h4>
+                                  <div className="grid grid-cols-2 gap-2 text-lg font-bold">
+                                      <div className="text-gray-300">Объем:</div><div className="text-white text-right">{inventoryReportData.totalWithRk1.volume.toFixed(2)} л</div>
+                                      <div className="text-gray-300">Масса:</div><div className="text-white text-right">{inventoryReportData.totalWithRk1.mass.toFixed(2)} кг</div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 mt-6 pt-4 border-t border-gray-700 bg-gray-800 sticky bottom-0">
+                          <div className="flex gap-3">
+                              <button onClick={() => inventoryReportRef.current && shareElementAsImage(inventoryReportRef.current, `Inventory_Report.png`)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98 flex items-center justify-center gap-2">📤 Отправить</button>
+                              <button onClick={() => {
+                                  if (workbook) generateInventoryMeasurementsReport(workbook);
+                              }} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98 flex items-center justify-center gap-2">💾 Скачать таблицу</button>
+                          </div>
+                          <button onClick={() => {
+                              let text = "Итоги инвентаризации\n\n";
+                              text += `РГС-50:\nОбъем: ${inventoryReportData.total50.volume} л\nМасса: ${inventoryReportData.total50.mass} кг\n\n`;
+                              text += `РГС-100:\nОбъем: ${inventoryReportData.total100.volume} л\nМасса: ${inventoryReportData.total100.mass} кг\n\n`;
+                              text += `РК-1:\nВзлив: ${inventoryReportData.rk1.measurement} мм\nОбъем: ${inventoryReportData.rk1.volume} л\nМасса: ${inventoryReportData.rk1.mass} кг\n\n`;
+                              text += `ИТОГО С РК-1:\nОбъем: ${inventoryReportData.totalWithRk1.volume.toFixed(2)} л\nМасса: ${inventoryReportData.totalWithRk1.mass.toFixed(2)} кг`;
+                              navigator.clipboard.writeText(text);
+                              alert('Текст скопирован!');
+                          }} className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98 flex items-center justify-center gap-2">
+                              📋 Скопировать текст
+                          </button>
+                          <button onClick={() => setShowInventoryReportModal(false)} className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-lg active:scale-98">Закрыть</button>
+                      </div>
+                  </div>
+              </div>
+          )}
+      </div>
+  );
+
   const renderReportsMenu = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in relative min-h-[500px] flex flex-col justify-center">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Отчеты и Журналы</h2>
@@ -1599,11 +1886,13 @@ const App: React.FC = () => {
                   📝 Сменный отчет
               </button>
           </div>
-          <button onClick={() => setCurrentScreen('selection')} className="bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-8 rounded-lg shadow-sm dark:shadow-md transition-all w-full max-w-xs mx-auto">
+          <button onClick={() => setCurrentScreen(currentEmployee ? 'mainMenu' : 'selection')} className="bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-transparent font-bold py-3 px-8 rounded-lg shadow-sm dark:shadow-md transition-all w-full max-w-xs mx-auto">
               Назад
           </button>
       </div>
   );
+
+
 
   return (
     <div className={`${theme} min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center p-4 selection:bg-violet-500 selection:text-white transition-colors duration-300 overflow-hidden`}>
@@ -1617,9 +1906,13 @@ const App: React.FC = () => {
           {currentScreen === 'reportVs' && renderReportVsScreen()}
           {currentScreen === 'reportSmena' && renderReportSmenaScreen()}
           {currentScreen === 'adminPanel' && renderAdminPanel()}
+          {currentScreen === 'inventoryReportMenu' && renderInventoryReportMenu()}
           {currentScreen === 'mainMenu' && renderMainMenu()}
           {currentScreen === 'fuelMeasurement' && renderFuelMeasurementScreen()}
           {currentScreen === 'tankEntry' && renderTankEntryScreen()}
+          {currentScreen === 'inventoryMeasurement' && renderInventoryMeasurementScreen()}
+          {currentScreen === 'inventoryTankEntry' && renderInventoryTankEntryScreen()}
+          {currentScreen === 'inventoryRk1Entry' && renderInventoryRk1Entry()}
           {currentScreen === 'tzaSelection' && renderTzaSelection()}
           {currentScreen === 'tzaReservoirSelection' && renderTzaReservoirSelection()}
           {currentScreen === 'tzaEntry' && renderTzaEntry()}

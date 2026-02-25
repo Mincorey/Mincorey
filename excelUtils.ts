@@ -1,107 +1,340 @@
 
-import { RGS_50_TABLE, RGS_100_TABLE, GT_66_TABLE, GT_72_TABLE, GT_81_TABLE, GT_90_TABLE, GT_92_TABLE, getVolume } from './calibrationData';
+import { RGS_50_TABLE, RGS_100_TABLE, GT_66_TABLE, GT_72_TABLE, GT_81_TABLE, GT_90_TABLE, GT_92_TABLE, RK_1_TABLE, getVolume } from './calibrationData';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
-// --- STYLES CONFIGURATION ---
-const STYLES = {
-    header: {
-        font: { bold: true, color: { argb: "FFFFFFFF" }, size: 12 },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: "FF4F46E5" } }, // Indigo
-        alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-        border: {
-            top: { style: "thin" }, bottom: { style: "thin" },
-            left: { style: "thin" }, right: { style: "thin" }
-        }
-    } as Partial<ExcelJS.Style>,
-    subHeader: {
-        font: { bold: true, color: { argb: "FF000000" } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: "FFE5E7EB" } }, // Gray
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    } as Partial<ExcelJS.Style>,
-    cellNormal: {
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } },
-        alignment: { horizontal: "center", vertical: "middle" }
-    } as Partial<ExcelJS.Style>,
-    cellHighlight: {
-        font: { bold: true },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: "FFFEF3C7" } }, // Amber/Yellow
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } },
-        alignment: { horizontal: "center", vertical: "middle" }
-    } as Partial<ExcelJS.Style>,
-    labelRight: {
-        font: { italic: true, size: 10 },
-        alignment: { horizontal: "right", vertical: "middle" }
-    } as Partial<ExcelJS.Style>,
-    tankTitle: {
-        font: { bold: true, size: 11, color: { argb: "FFFFFFFF" } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: "FF3730A3" } }, // Dark Indigo
-        alignment: { horizontal: "center", vertical: "middle" },
-        border: { top: { style: "medium" }, bottom: { style: "medium" }, left: { style: "medium" }, right: { style: "medium" } }
-    } as Partial<ExcelJS.Style>
+// ... (STYLES and MAPPINGS)
+
+export const getInventoryMeasurementsData = (workbook: ExcelJS.Workbook) => {
+    const ws = workbook.getWorksheet('Zamer_INVENT');
+    if (!ws) return null;
+
+    const getData = (tankName: string) => {
+        const cells = TANK_CELLS_MAPPING[tankName];
+        const avgCell = AVERAGE_MAPPING[tankName];
+        const volCell = VOLUME_MAPPING[tankName];
+        const massCell = MASS_MAPPING[tankName];
+
+        return {
+            name: tankName,
+            m1: getCellValue(workbook, 'Zamer_INVENT', cells[0]),
+            m2: getCellValue(workbook, 'Zamer_INVENT', cells[1]),
+            m3: getCellValue(workbook, 'Zamer_INVENT', cells[2]),
+            avg: getCellValue(workbook, 'Zamer_INVENT', avgCell),
+            density: getCellValue(workbook, 'Zamer_INVENT', cells[3]),
+            temp: getCellValue(workbook, 'Zamer_INVENT', cells[4]),
+            volume: getCellValue(workbook, 'Zamer_INVENT', volCell),
+            mass: getCellValue(workbook, 'Zamer_INVENT', massCell),
+        };
+    };
+
+    const tanks50 = ['РГС-50 №1', 'РГС-50 №2', 'РГС-50 №3', 'РГС-50 №4', 'РГС-50 №5', 'РГС-50 №6', 'РГС-50 №7', 'РГС-50 №8'].map(getData);
+    const tanks100 = ['РГС-100 №1', 'РГС-100 №2', 'РГС-100 №3', 'РГС-100 №4'].map(getData);
+
+    const rk1 = {
+        measurement: getCellValue(workbook, 'Zamer_INVENT', 'N25'),
+        volume: getCellValue(workbook, 'Zamer_INVENT', 'N26'),
+        mass: getCellValue(workbook, 'Zamer_INVENT', 'N27'),
+    };
+
+    const total50 = {
+        volume: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_50.volume),
+        mass: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_50.mass),
+        avgDensity: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_50.avgDensity),
+        avgTemp: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_50.avgTemp),
+    };
+
+    const total100 = {
+        volume: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_100.volume),
+        mass: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_100.mass),
+        avgDensity: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_100.avgDensity),
+        avgTemp: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_100.avgTemp),
+    };
+
+    const totalAll = {
+        volume: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_ALL.volume),
+        mass: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_ALL.mass),
+        avgDensity: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_ALL.avgDensity),
+        avgTemp: getCellValue(workbook, 'Zamer_INVENT', TOTALS_MAPPING_ALL.avgTemp),
+    };
+    
+    // Calculate Total with RK-1
+    const totalVolWithRk1 = (Number(totalAll.volume) || 0) + (Number(rk1.volume) || 0);
+    const totalMassWithRk1 = (Number(totalAll.mass) || 0) + (Number(rk1.mass) || 0);
+
+    return { tanks50, tanks100, rk1, total50, total100, totalAll, totalWithRk1: { volume: totalVolWithRk1, mass: totalMassWithRk1 } };
 };
 
-/**
- * Карта адресов ячеек замеров
- */
-const TANK_CELLS_MAPPING: Record<string, string[]> = {
-     'РГС-50 №1': ['B4', 'B5', 'B6', 'B8', 'B9'],
-     'РГС-50 №2': ['F4', 'F5', 'F6', 'F8', 'F9'],
-     'РГС-50 №3': ['J4', 'J5', 'J6', 'J8', 'J9'],
-     'РГС-50 №4': ['N4', 'N5', 'N6', 'N8', 'N9'],
-     'РГС-50 №5': ['B14', 'B15', 'B16', 'B18', 'B19'],
-     'РГС-50 №6': ['F14', 'F15', 'F16', 'F18', 'F19'],
-     'РГС-50 №7': ['J14', 'J15', 'J16', 'J18', 'J19'],
-     'РГС-50 №8': ['N14', 'N15', 'N16', 'N18', 'N19'],
-     'РГС-100 №1': ['B30', 'B31', 'B32', 'B34', 'B35'],
-     'РГС-100 №2': ['F30', 'F31', 'F32', 'F34', 'F35'],
-     'РГС-100 №3': ['J30', 'J31', 'J32', 'J34', 'J35'],
-     'РГС-100 №4': ['N30', 'N31', 'N32', 'N34', 'N35'],
-};
+export const generateInventoryMeasurementsReport = async (workbook: ExcelJS.Workbook) => {
+    const data = getInventoryMeasurementsData(workbook);
+    if (!data) return;
 
-const AVERAGE_MAPPING: Record<string, string> = {
-    'РГС-50 №1': 'B7', 'РГС-50 №2': 'F7', 'РГС-50 №3': 'J7', 'РГС-50 №4': 'N7',
-    'РГС-50 №5': 'B17', 'РГС-50 №6': 'F17', 'РГС-50 №7': 'J17', 'РГС-50 №8': 'N17',
-    'РГС-100 №1': 'B33', 'РГС-100 №2': 'F33', 'РГС-100 №3': 'J33', 'РГС-100 №4': 'N33',
-};
+    const reportWb = new ExcelJS.Workbook();
+    const ws = reportWb.addWorksheet('Отчет');
 
-const VOLUME_MAPPING: Record<string, string> = {
-    'РГС-50 №1': 'B10', 'РГС-50 №2': 'F10', 'РГС-50 №3': 'J10', 'РГС-50 №4': 'N10',
-    'РГС-50 №5': 'B20', 'РГС-50 №6': 'F20', 'РГС-50 №7': 'J20', 'РГС-50 №8': 'N20',
-    'РГС-100 №1': 'B36', 'РГС-100 №2': 'F36', 'РГС-100 №3': 'J36', 'РГС-100 №4': 'N36',
-};
+    // Setup Columns (approximate widths based on image)
+    ws.columns = [
+        { width: 15 }, { width: 12 }, { width: 8 }, // Block 1
+        { width: 15 }, { width: 12 }, { width: 8 }, // Block 2
+        { width: 15 }, { width: 12 }, { width: 8 }, // Block 3
+        { width: 15 }, { width: 12 }, { width: 8 }, // Block 4
+    ];
 
-const MASS_MAPPING: Record<string, string> = {
-    'РГС-50 №1': 'B11', 'РГС-50 №2': 'F11', 'РГС-50 №3': 'J11', 'РГС-50 №4': 'N11',
-    'РГС-50 №5': 'B21', 'РГС-50 №6': 'F21', 'РГС-50 №7': 'J21', 'РГС-50 №8': 'N21',
-    'РГС-100 №1': 'B37', 'РГС-100 №2': 'F37', 'РГС-100 №3': 'J37', 'РГС-100 №4': 'N37',
-};
+    // Title
+    ws.mergeCells('A1:K1');
+    const titleCell = ws.getCell('A1');
+    titleCell.value = 'КОНТРОЛЬНО-МЕТРОЛОГИЧЕСКИЕ ХАРАКТЕРИСТИКИ РЕЗЕРВУАРОВ СГСМ';
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } }; // Light Green
+    titleCell.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
 
-const DENSITY_CELL_MAPPING: Record<string, string> = {
-    'РГС-50 №1': 'B8', 'РГС-50 №2': 'F8', 'РГС-50 №3': 'J8', 'РГС-50 №4': 'N8',
-    'РГС-50 №5': 'B18', 'РГС-50 №6': 'F18', 'РГС-50 №7': 'J18', 'РГС-50 №8': 'N18',
-    'РГС-100 №1': 'B34', 'РГС-100 №2': 'F34', 'РГС-100 №3': 'J34', 'РГС-100 №4': 'N34'
-};
+    ws.getCell('L1').value = `Дата: ${new Date().toLocaleDateString('ru-RU')}`;
+    ws.getCell('L1').font = { bold: true };
+    ws.getCell('L1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+    ws.getCell('L1').border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
 
-const TOTALS_MAPPING_ALL = {
-    volume: 'F40',
-    mass: 'F41',
-    avgDensity: 'F42',
-    avgTemp: 'F43'
-};
+    // Helper to draw a tank block
+    const drawTankBlock = (startRow: number, startCol: number, tankData: any) => {
+        const r = startRow;
+        const c = startCol;
+        
+        // Header
+        ws.mergeCells(r, c, r, c + 2);
+        const header = ws.getCell(r, c);
+        header.value = tankData.name;
+        header.style = STYLES.tankTitle; // Reuse existing style or define new
+        header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } }; // Light Green from image
+        header.font = { bold: true, color: { argb: 'FF000000' } };
+        header.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
 
-const TOTALS_MAPPING_50 = {
-    volume: 'B24',
-    mass: 'B25',
-    avgDensity: 'B26',
-    avgTemp: 'B27'
-};
+        // Rows
+        const rows = [
+            { label: 'Взлив №1', value: tankData.m1, unit: 'мм.' },
+            { label: 'Взлив №2', value: tankData.m2, unit: 'мм.' },
+            { label: 'Взлив №3', value: tankData.m3, unit: 'мм.' },
+            { label: 'Взлив ср.', value: tankData.avg, unit: 'мм.' },
+            { label: 'Плотность', value: tankData.density, unit: 'г/см.куб.' },
+            { label: 'Температура', value: tankData.temp, unit: 'гр.С' },
+            { label: 'Объем', value: tankData.volume, unit: 'л.', bold: true },
+            { label: 'Масса', value: tankData.mass, unit: 'кг.', bold: true },
+        ];
 
-const TOTALS_MAPPING_100 = {
-    volume: 'B40',
-    mass: 'B41',
-    avgDensity: 'B42',
-    avgTemp: 'B43'
+        rows.forEach((row, idx) => {
+            const currentRow = r + 1 + idx;
+            const labelCell = ws.getCell(currentRow, c);
+            const valueCell = ws.getCell(currentRow, c + 1);
+            const unitCell = ws.getCell(currentRow, c + 2);
+
+            labelCell.value = row.label;
+            labelCell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+            if (row.bold) labelCell.font = { bold: true };
+
+            valueCell.value = row.value;
+            valueCell.alignment = { horizontal: 'right' };
+            valueCell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+            if (row.bold) valueCell.font = { bold: true };
+
+            unitCell.value = row.unit;
+            unitCell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'medium' } };
+        });
+        
+        // Bottom border for the block
+        const lastRow = r + rows.length;
+        ws.getCell(lastRow, c).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+1).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+2).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'medium' } };
+    };
+
+    // Draw RGS-50 (Rows 1-4)
+    data.tanks50.slice(0, 4).forEach((tank, i) => drawTankBlock(3, 1 + i * 3, tank));
+    // Draw RGS-50 (Rows 5-8)
+    data.tanks50.slice(4, 8).forEach((tank, i) => drawTankBlock(13, 1 + i * 3, tank));
+
+    // Draw Totals RGS-50
+    const drawTotalBlock = (r: number, c: number, title: string, data: any, color: string) => {
+        ws.mergeCells(r, c, r, c + 2);
+        const h = ws.getCell(r, c);
+        h.value = title;
+        h.font = { bold: true };
+        h.alignment = { horizontal: 'center' };
+        h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+        h.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+
+        const rows = [
+            { label: 'ИТОГО Объем', value: data.volume, unit: 'л.' },
+            { label: 'ИТОГО Масса', value: data.mass, unit: 'кг.' },
+            { label: 'Средняя плотность', value: data.avgDensity, unit: 'г/см.куб.' },
+            { label: 'Средняя температура', value: data.avgTemp, unit: 'гр.С' },
+        ];
+
+        rows.forEach((row, idx) => {
+            const cr = r + 1 + idx;
+            ws.getCell(cr, c).value = row.label;
+            ws.getCell(cr, c).font = { bold: true };
+            ws.getCell(cr, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+            ws.getCell(cr, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 1).value = row.value;
+            ws.getCell(cr, c + 1).alignment = { horizontal: 'right' };
+            ws.getCell(cr, c + 1).font = { bold: true };
+            ws.getCell(cr, c + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+            ws.getCell(cr, c + 1).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 2).value = row.unit;
+            ws.getCell(cr, c + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+            ws.getCell(cr, c + 2).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'medium' } };
+        });
+        
+        // Bottom border
+        const lastRow = r + rows.length;
+        ws.getCell(lastRow, c).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+1).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+2).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'medium' } };
+    };
+
+    drawTotalBlock(23, 1, 'ИТОГО ПО РГС-50', data.total50, 'FF6B8E23'); // Olive Drab
+
+    // Draw RK-1
+    const drawRk1Block = (r: number, c: number) => {
+        ws.mergeCells(r, c, r, c + 2);
+        const h = ws.getCell(r, c);
+        h.value = 'РК-1';
+        h.font = { bold: true };
+        h.alignment = { horizontal: 'center' };
+        h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } };
+        h.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+
+        const rows = [
+            { label: 'Взлив:', value: data.rk1.measurement, unit: 'мм.' },
+            { label: 'Объем', value: data.rk1.volume, unit: 'л.', bold: true },
+            { label: 'Масса', value: data.rk1.mass, unit: 'кг.', bold: true },
+        ];
+
+        rows.forEach((row, idx) => {
+            const cr = r + 1 + idx;
+            ws.getCell(cr, c).value = row.label;
+            ws.getCell(cr, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+            
+            ws.getCell(cr, c + 1).value = row.value;
+            ws.getCell(cr, c + 1).alignment = { horizontal: 'right' };
+            if (row.bold) {
+                ws.getCell(cr, c + 1).font = { bold: true };
+                ws.getCell(cr, c).font = { bold: true };
+                ws.getCell(cr, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } }; // Light Orange
+                ws.getCell(cr, c + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } };
+                ws.getCell(cr, c + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } };
+            }
+            ws.getCell(cr, c + 1).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 2).value = row.unit;
+            ws.getCell(cr, c + 2).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'medium' } };
+        });
+        
+        // Fix borders for RK-1 block
+        const lastRow = r + rows.length;
+        ws.getCell(lastRow, c).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+1).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+2).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'medium' } };
+    };
+
+    drawRk1Block(23, 10);
+
+    // Draw RGS-100 (Rows 1-4)
+    data.tanks100.forEach((tank, i) => drawTankBlock(28, 1 + i * 3, tank));
+
+    // Draw Totals RGS-100
+    drawTotalBlock(38, 1, 'ИТОГО ПО РГС-100', data.total100, 'FF6B8E23');
+
+    // Draw Total All
+    const drawSimpleTotal = (r: number, c: number, title: string, vol: any, mass: any, den: any, temp: any, color: string) => {
+        ws.mergeCells(r, c, r, c + 2);
+        const h = ws.getCell(r, c);
+        h.value = title;
+        h.font = { bold: true };
+        h.alignment = { horizontal: 'center' };
+        h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+        h.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+
+        const rows = [
+            { label: 'ОБЪЕМ', value: vol, unit: 'л.' },
+            { label: 'МАССА', value: mass, unit: 'кг.' },
+        ];
+        if (den) rows.push({ label: 'ПЛОТНОСТЬ СРЕДНЯЯ', value: den, unit: 'г/см.куб.' });
+        if (temp) rows.push({ label: 'ТЕМПЕРАТУРА СРЕДНЯЯ', value: temp, unit: 'гр.С' });
+
+        rows.forEach((row, idx) => {
+            const cr = r + 1 + idx;
+            ws.getCell(cr, c).value = row.label;
+            ws.getCell(cr, c).font = { bold: true };
+            ws.getCell(cr, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFEFFF' } }; // Light Blue
+            ws.getCell(cr, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 1).value = row.value;
+            ws.getCell(cr, c + 1).alignment = { horizontal: 'right' };
+            ws.getCell(cr, c + 1).font = { bold: true };
+            ws.getCell(cr, c + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFEFFF' } };
+            ws.getCell(cr, c + 1).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 2).value = row.unit;
+            ws.getCell(cr, c + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFEFFF' } };
+            ws.getCell(cr, c + 2).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'medium' } };
+        });
+        
+        // Bottom border
+        const lastRow = r + rows.length;
+        ws.getCell(lastRow, c).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+1).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+2).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'medium' } };
+    };
+
+    drawSimpleTotal(38, 4, 'ИТОГО ПО ВСЕМ РГС', data.totalAll.volume, data.totalAll.mass, data.totalAll.avgDensity, data.totalAll.avgTemp, 'FF00BFFF'); // Deep Sky Blue
+    
+    // Draw Total with RK-1
+    const drawRk1Total = (r: number, c: number, title: string, vol: any, mass: any) => {
+        ws.mergeCells(r, c, r, c + 2);
+        const h = ws.getCell(r, c);
+        h.value = title;
+        h.font = { bold: true };
+        h.alignment = { horizontal: 'center' };
+        h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD700' } }; // Gold
+        h.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+
+        const rows = [
+            { label: 'ОБЪЕМ', value: vol, unit: 'л.' },
+            { label: 'МАССА', value: mass, unit: 'кг.' },
+        ];
+
+        rows.forEach((row, idx) => {
+            const cr = r + 1 + idx;
+            ws.getCell(cr, c).value = row.label;
+            ws.getCell(cr, c).font = { bold: true };
+            ws.getCell(cr, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8DC' } }; // Cornsilk
+            ws.getCell(cr, c).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 1).value = row.value;
+            ws.getCell(cr, c + 1).alignment = { horizontal: 'right' };
+            ws.getCell(cr, c + 1).font = { bold: true };
+            ws.getCell(cr, c + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8DC' } };
+            ws.getCell(cr, c + 1).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+
+            ws.getCell(cr, c + 2).value = row.unit;
+            ws.getCell(cr, c + 2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8DC' } };
+            ws.getCell(cr, c + 2).border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'medium' } };
+        });
+        
+        // Bottom border
+        const lastRow = r + rows.length;
+        ws.getCell(lastRow, c).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+1).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+        ws.getCell(lastRow, c+2).border = { top: { style: 'thin' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'medium' } };
+    };
+
+    drawRk1Total(38, 7, 'ИТОГО С РК-1', data.totalWithRk1.volume, data.totalWithRk1.mass);
+
+    // Save
+    const buffer = await reportWb.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Invent_Report_${new Date().toLocaleDateString('ru-RU')}.xlsx`);
 };
 
 // ... (existing code)
@@ -363,46 +596,15 @@ export const getBalanceReportData = (workbook: ExcelJS.Workbook, tanks: string[]
 // ExcelJS handles this internally usually, but for mapping logic we might need it.
 // Actually ExcelJS works fine with 'A1' strings.
 
-export const createNewWorkbook = (): ExcelJS.Workbook => {
-    const wb = new ExcelJS.Workbook();
-    wb.creator = 'SGSM App';
-    wb.created = new Date();
-
-    // 1. Лист SMENA
-    const wsSmena = wb.addWorksheet('SMENA');
-    wsSmena.columns = [
-        { key: 'date', width: 15 },
-        { key: 'employee', width: 25 },
-        { key: 'receivedL', width: 15 },
-        { key: 'receivedKg', width: 15 },
-        { key: 'issuedTzaL', width: 18 },
-        { key: 'issuedTzaKg', width: 18 },
-        { key: 'issuedVsL', width: 18 },
-        { key: 'issuedVsKg', width: 18 },
-        { key: 'status', width: 12 }
-    ];
-    
-    // Add Title Row manually at row 1
-    wsSmena.getRow(1).values = ['СВОДНЫЙ ЖУРНАЛ СМЕН'];
-    wsSmena.mergeCells('A1:I1');
-    wsSmena.getCell('A1').font = { bold: true, size: 14 };
-    wsSmena.getCell('A1').alignment = { horizontal: 'center' };
-
-    // Header Row at row 2
-    wsSmena.getRow(2).values = ['Дата', 'Сотрудник', 'Принято (л)', 'Принято (кг)', 'Выдано ТЗА (л)', 'Выдано ТЗА (кг)', 'Выдано ВС (л)', 'Выдано ВС (кг)', 'Статус'];
-    wsSmena.getRow(2).eachCell((cell) => {
-        cell.style = STYLES.header;
-    });
-
-    // 2. Лист Zamer
-    const wsZamer = wb.addWorksheet('Zamer');
+export const initZamerSheet = (wb: ExcelJS.Workbook, sheetName: string) => {
+    const wsZamer = wb.addWorksheet(sheetName);
     wsZamer.columns = [
         { width: 18 }, { width: 12 }, { width: 5 },
         { width: 18 }, { width: 12 }, { width: 5 },
         { width: 18 }, { width: 12 }, { width: 5 },
         { width: 18 }, { width: 12 }
     ];
-    wsZamer.getCell('A1').value = 'ЛИСТ ЗАМЕРОВ ТОПЛИВА (ОСТАТКИ)';
+    wsZamer.getCell('A1').value = sheetName === 'Zamer_INVENT' ? 'ЛИСТ ИНВЕНТАРИЗАЦИИ' : 'ЛИСТ ЗАМЕРОВ ТОПЛИВА (ОСТАТКИ)';
     wsZamer.getCell('A1').font = { bold: true, size: 16, color: { argb: "FF4338CA" } };
 
     Object.keys(TANK_CELLS_MAPPING).forEach(tankName => {
@@ -476,6 +678,81 @@ export const createNewWorkbook = (): ExcelJS.Workbook => {
             cell.style = STYLES.cellHighlight;
         }
     });
+};
+
+export const ensureInventorySheet = (wb: ExcelJS.Workbook): boolean => {
+    const sheetName = 'Zamer_INVENT';
+    if (!wb.getWorksheet(sheetName)) {
+        initZamerSheet(wb, sheetName);
+        return true;
+    }
+    return false;
+};
+
+export const ensureRk1Sheet = (wb: ExcelJS.Workbook): boolean => {
+    let ws = wb.getWorksheet('RK_1');
+    if (!ws) {
+        ws = wb.addWorksheet('RK_1');
+        ws.columns = [
+            { header: 'Взлив (мм)', key: 'mm', width: 15 },
+            { header: 'Объем (л)', key: 'liters', width: 15 }
+        ];
+    }
+    
+    // Check if we need to repopulate. 
+    // The correct table has 800 entries + 1 header = 801 rows.
+    // If it differs, we repopulate.
+    const expectedRows = Object.keys(RK_1_TABLE).length + 1;
+    
+    if (ws.rowCount !== expectedRows) {
+        console.log(`Updating RK_1 sheet. Current rows: ${ws.rowCount}, Expected: ${expectedRows}`);
+        // Clear existing rows (keep header)
+        if (ws.rowCount > 1) {
+            ws.spliceRows(2, ws.rowCount - 1);
+        }
+        
+        // Populate with real data from RK_1_TABLE
+        Object.entries(RK_1_TABLE).forEach(([mm, liters]) => {
+            ws!.addRow({ mm: Number(mm), liters: liters });
+        });
+        return true;
+    }
+    return false;
+};
+
+export const createNewWorkbook = (): ExcelJS.Workbook => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'SGSM App';
+    wb.created = new Date();
+
+    // 1. Лист SMENA
+    const wsSmena = wb.addWorksheet('SMENA');
+    wsSmena.columns = [
+        { key: 'date', width: 15 },
+        { key: 'employee', width: 25 },
+        { key: 'receivedL', width: 15 },
+        { key: 'receivedKg', width: 15 },
+        { key: 'issuedTzaL', width: 18 },
+        { key: 'issuedTzaKg', width: 18 },
+        { key: 'issuedVsL', width: 18 },
+        { key: 'issuedVsKg', width: 18 },
+        { key: 'status', width: 12 }
+    ];
+    
+    // Add Title Row manually at row 1
+    wsSmena.getRow(1).values = ['СВОДНЫЙ ЖУРНАЛ СМЕН'];
+    wsSmena.mergeCells('A1:I1');
+    wsSmena.getCell('A1').font = { bold: true, size: 14 };
+    wsSmena.getCell('A1').alignment = { horizontal: 'center' };
+
+    // Header Row at row 2
+    wsSmena.getRow(2).values = ['Дата', 'Сотрудник', 'Принято (л)', 'Принято (кг)', 'Выдано ТЗА (л)', 'Выдано ТЗА (кг)', 'Выдано ВС (л)', 'Выдано ВС (кг)', 'Статус'];
+    wsSmena.getRow(2).eachCell((cell) => {
+        cell.style = STYLES.header;
+    });
+
+    // 2. Лист Zamer
+    initZamerSheet(wb, 'Zamer');
 
     // 3. Лист Vidacha_TZA
     const wsTza = wb.addWorksheet('Vidacha_TZA');
@@ -517,7 +794,77 @@ export const createNewWorkbook = (): ExcelJS.Workbook => {
     wsJdc.getRow(2).values = ['Дата', 'Время', 'Тип вагона', '№ Вагона', 'Взлив средний', 'Плотность', 'Температура', 'Объем (л)', 'Масса (кг)'];
     wsJdc.getRow(2).eachCell(cell => cell.style = STYLES.header);
 
+    // 7. Лист RK_1 (Калибровочная таблица)
+    const wsRk1 = wb.addWorksheet('RK_1');
+    wsRk1.columns = [
+        { header: 'Взлив (мм)', key: 'mm', width: 15 },
+        { header: 'Объем (л)', key: 'liters', width: 15 }
+    ];
+    
+    // Populate with real data from RK_1_TABLE
+    Object.entries(RK_1_TABLE).forEach(([mm, liters]) => {
+        wsRk1.addRow({ mm: Number(mm), liters: liters });
+    });
+
     return wb;
+};
+
+export const saveRk1Measurement = (workbook: ExcelJS.Workbook, measurementMm: number): { volume: number, mass: number, avgDensity: number } | null => {
+    const wsInvent = workbook.getWorksheet('Zamer_INVENT');
+    const wsRk1 = workbook.getWorksheet('RK_1');
+    
+    if (!wsInvent || !wsRk1) return null;
+
+    // 1. Save measurement to N25
+    setCellValue(workbook, 'Zamer_INVENT', 'N25', measurementMm, STYLES.cellNormal);
+
+    // 2. Lookup volume in RK_1
+    let volume = 0;
+    let found = false;
+    wsRk1.eachRow((row, rowNumber) => {
+        if (found) return;
+        const mmCell = row.getCell(1);
+        const volCell = row.getCell(2);
+        if (mmCell.value == measurementMm) {
+            volume = Number(volCell.value) || 0;
+            found = true;
+        }
+    });
+
+    // If not found exact match, maybe interpolation? 
+    // For now, simple lookup as requested "ищется в этом столбце это значение"
+    
+    // Round volume to 2 decimal places
+    volume = parseFloat(volume.toFixed(2));
+    
+    // 3. Save volume to N26
+    setCellValue(workbook, 'Zamer_INVENT', 'N26', volume, STYLES.cellHighlight);
+
+    // 4. Calculate average density from Zamer_INVENT
+    let totalDensity = 0;
+    let count = 0;
+    
+    // Iterate through all tanks in TANK_CELLS_MAPPING to find densities
+    Object.keys(TANK_CELLS_MAPPING).forEach(tankName => {
+        const cells = TANK_CELLS_MAPPING[tankName];
+        const denAddr = cells[3]; // Density cell address
+        const denVal = getCellValue(workbook, 'Zamer_INVENT', denAddr);
+        const den = parseFloat(String(denVal));
+        if (!isNaN(den) && den > 0) {
+            totalDensity += den;
+            count++;
+        }
+    });
+
+    const avgDensity = count > 0 ? totalDensity / count : 0;
+
+    // 5. Calculate Mass
+    const mass = parseFloat((volume * avgDensity).toFixed(2));
+
+    // 6. Save mass to N27
+    setCellValue(workbook, 'Zamer_INVENT', 'N27', mass, STYLES.cellHighlight);
+
+    return { volume, mass, avgDensity };
 };
 
 export const workbookToArrayBuffer = async (workbook: ExcelJS.Workbook): Promise<ArrayBuffer> => {
@@ -771,26 +1118,26 @@ export const deleteShiftEntry = (workbook: ExcelJS.Workbook, rowIndex: number) =
 
 interface CalculationResult { average: number; volume: number; mass: number; }
 
-export const getTankMeasurements = (workbook: ExcelJS.Workbook, tankName: string) => {
+export const getTankMeasurements = (workbook: ExcelJS.Workbook, tankName: string, sheetName: string = 'Zamer') => {
     const cells = TANK_CELLS_MAPPING[tankName];
     if (!cells) return { m1: '', m2: '', m3: '', density: '', temp: '' };
     const getVal = (addr: string): string => {
-        const val = getCellValue(workbook, 'Zamer', addr);
+        const val = getCellValue(workbook, sheetName, addr);
         return val !== null && val !== undefined ? String(val) : '';
     };
     return { m1: getVal(cells[0]), m2: getVal(cells[1]), m3: getVal(cells[2]), density: getVal(cells[3]), temp: getVal(cells[4]) };
 };
 
-export const getTankFullData = (workbook: ExcelJS.Workbook, tankName: string) => {
-    const measurements = getTankMeasurements(workbook, tankName);
+export const getTankFullData = (workbook: ExcelJS.Workbook, tankName: string, sheetName: string = 'Zamer') => {
+    const measurements = getTankMeasurements(workbook, tankName, sheetName);
     
     const avgAddr = AVERAGE_MAPPING[tankName];
     const volAddr = VOLUME_MAPPING[tankName];
     const massAddr = MASS_MAPPING[tankName];
 
-    const average = avgAddr ? Number(getCellValue(workbook, 'Zamer', avgAddr)) || 0 : 0;
-    const volume = volAddr ? Number(getCellValue(workbook, 'Zamer', volAddr)) || 0 : 0;
-    const mass = massAddr ? Number(getCellValue(workbook, 'Zamer', massAddr)) || 0 : 0;
+    const average = avgAddr ? Number(getCellValue(workbook, sheetName, avgAddr)) || 0 : 0;
+    const volume = volAddr ? Number(getCellValue(workbook, sheetName, volAddr)) || 0 : 0;
+    const mass = massAddr ? Number(getCellValue(workbook, sheetName, massAddr)) || 0 : 0;
 
     return {
         name: tankName,
@@ -845,8 +1192,8 @@ export const generateBalanceReport = async (workbook: ExcelJS.Workbook, tanks: s
     await saveExcelFile(reportWb, `Ostatki_Report_${dateStr}.xlsx`);
 };
 
-export const saveTankMeasurements = (workbook: ExcelJS.Workbook, tankName: string, data: any): CalculationResult | null => {
-  const SHEET_NAME = 'Zamer';
+export const saveTankMeasurements = (workbook: ExcelJS.Workbook, tankName: string, data: any, sheetName: string = 'Zamer'): CalculationResult | null => {
+  const SHEET_NAME = sheetName;
   const cells = TANK_CELLS_MAPPING[tankName];
   if (!cells) return null;
 

@@ -6,9 +6,10 @@ import { GT_72_TABLE } from './gt72Table';
 import { GT_81_TABLE } from './gt81Table';
 import { GT_90_TABLE } from './gt90Table';
 import { GT_92_TABLE } from './gt92Table';
+import { RK_1_TABLE } from './rk1Table';
 
 // Ре-экспорт таблиц для использования в других частях приложения (например, excelUtils)
-export { RGS_50_TABLE, RGS_100_TABLE, GT_66_TABLE, GT_72_TABLE, GT_81_TABLE, GT_90_TABLE, GT_92_TABLE };
+export { RGS_50_TABLE, RGS_100_TABLE, GT_66_TABLE, GT_72_TABLE, GT_81_TABLE, GT_90_TABLE, GT_92_TABLE, RK_1_TABLE };
 
 /**
  * Функция для получения объема по таблице.
