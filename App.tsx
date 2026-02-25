@@ -781,8 +781,8 @@ const App: React.FC = () => {
   const renderTankEntryScreen = () => (
     <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
         {showResultModal && calculationResult && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                 <div className="bg-gray-800 border border-teal-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
                     <div ref={tankResultRef} className="bg-gray-800 p-4 rounded-xl">
                         <h3 className="text-2xl font-bold text-white mb-6">Результаты замера</h3>
@@ -863,8 +863,8 @@ const App: React.FC = () => {
   const renderTzaEntry = () => (
       <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
           {showTzaModal && tzaResult && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                 <div className="bg-gray-800 border border-green-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
                     <div ref={tzaResultRef} className="bg-gray-800 p-4 rounded-xl">
                         <h3 className="text-2xl font-bold text-white mb-6">Выдача подтверждена</h3>
@@ -932,8 +932,8 @@ const App: React.FC = () => {
   const renderPriemEntry = () => (
     <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
         {showPriemModal && priemResult && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                 <div className="bg-gray-800 border border-blue-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
                     <div ref={priemResultRef} className="bg-gray-800 p-4 rounded-xl">
                         <h3 className="text-2xl font-bold text-white mb-6">Прием подтвержден</h3>
@@ -997,8 +997,8 @@ const App: React.FC = () => {
   const renderVsEntry = () => (
       <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
           {showVsModal && vsResult && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                 <div className="bg-gray-800 border border-green-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
                     <div ref={vsResultRef} className="bg-gray-800 p-4 rounded-xl">
                         <h3 className="text-2xl font-bold text-white mb-6">Заправка ВС завершена</h3>
@@ -1061,8 +1061,8 @@ const App: React.FC = () => {
   const renderJdcEntry = () => (
       <div className="w-full max-w-lg text-center animate-fade-in p-4 relative">
           {showJdcModal && jdcResult && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                 <div className="bg-gray-800 border border-green-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-md animate-fade-in-up">
                     <div ref={jdcResultRef} className="bg-gray-800 p-4 rounded-xl">
                         <h3 className="text-2xl font-bold text-white mb-6">Замер ЖДЦ сохранен</h3>
@@ -1156,8 +1156,8 @@ const App: React.FC = () => {
       return (
           <div className="w-full max-w-5xl text-center animate-fade-in p-4 relative">
               {showOstatkiModal && ostatkiReportData && (
-                  <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                      <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                      <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                       <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
                           <div ref={ostatkiReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
                               <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Остатки на складе</h3>
@@ -1302,8 +1302,8 @@ const App: React.FC = () => {
   const renderReportPriemScreen = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in p-4 relative">
           {showPriemReportModal && priemReportData && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                   <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
                       <div ref={priemReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
                           <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Отчет по приходам</h3>
@@ -1364,8 +1364,8 @@ const App: React.FC = () => {
   const renderReportTzaScreen = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in p-4 relative">
           {showTzaReportModal && tzaReportData && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                   <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
                       <div ref={tzaReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
                           <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Отчет по выдаче в ТЗА</h3>
@@ -1427,8 +1427,8 @@ const App: React.FC = () => {
   const renderReportVsScreen = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in p-4 relative">
           {showVsReportModal && vsReportData && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                   <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
                       <div ref={vsReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
                           <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Отчет по выдаче в ВС</h3>
@@ -1497,8 +1497,8 @@ const App: React.FC = () => {
   const renderReportSmenaScreen = () => (
       <div className="w-full max-w-4xl text-center animate-fade-in p-4 relative">
           {showSmenaReportModal && smenaReportData && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl"></div>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"></div>
                   <div className="bg-gray-800 border border-cyan-500 p-6 rounded-2xl shadow-2xl relative z-10 w-full max-w-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
                       <div ref={smenaReportRef} className="bg-gray-800 p-4 rounded-xl flex-1">
                           <h3 className="text-2xl font-bold text-white mb-6 text-center border-b border-gray-700 pb-4">Сменный отчет</h3>
@@ -1607,26 +1607,28 @@ const App: React.FC = () => {
 
   return (
     <div className={`${theme} min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col items-center justify-center p-4 selection:bg-violet-500 selection:text-white transition-colors duration-300 overflow-hidden`}>
-      <div className="w-full h-full flex flex-col items-center justify-center max-h-screen overflow-y-auto">
-      {currentScreen === 'selection' && renderSelectionScreen()}
-      {currentScreen === 'reportsMenu' && renderReportsMenu()}
-      {currentScreen === 'reportOstatki' && renderReportOstatkiScreen()}
-      {currentScreen === 'reportPriem' && renderReportPriemScreen()}
-      {currentScreen === 'reportTza' && renderReportTzaScreen()}
-      {currentScreen === 'reportVs' && renderReportVsScreen()}
-      {currentScreen === 'reportSmena' && renderReportSmenaScreen()}
-      {currentScreen === 'adminPanel' && renderAdminPanel()}
-      {currentScreen === 'mainMenu' && renderMainMenu()}
-      {currentScreen === 'fuelMeasurement' && renderFuelMeasurementScreen()}
-      {currentScreen === 'tankEntry' && renderTankEntryScreen()}
-      {currentScreen === 'tzaSelection' && renderTzaSelection()}
-      {currentScreen === 'tzaReservoirSelection' && renderTzaReservoirSelection()}
-      {currentScreen === 'tzaEntry' && renderTzaEntry()}
-      {currentScreen === 'priemReservoirSelection' && renderPriemReservoirSelection()}
-      {currentScreen === 'priemEntry' && renderPriemEntry()}
-      {currentScreen === 'vsTzaSelection' && renderVsTzaSelection()}
-      {currentScreen === 'vsEntry' && renderVsEntry()}
-      {currentScreen === 'jdcEntry' && renderJdcEntry()}
+      <div className="w-full h-full max-h-screen overflow-y-auto">
+        <div className="min-h-full w-full flex flex-col items-center justify-center p-4">
+          {currentScreen === 'selection' && renderSelectionScreen()}
+          {currentScreen === 'reportsMenu' && renderReportsMenu()}
+          {currentScreen === 'reportOstatki' && renderReportOstatkiScreen()}
+          {currentScreen === 'reportPriem' && renderReportPriemScreen()}
+          {currentScreen === 'reportTza' && renderReportTzaScreen()}
+          {currentScreen === 'reportVs' && renderReportVsScreen()}
+          {currentScreen === 'reportSmena' && renderReportSmenaScreen()}
+          {currentScreen === 'adminPanel' && renderAdminPanel()}
+          {currentScreen === 'mainMenu' && renderMainMenu()}
+          {currentScreen === 'fuelMeasurement' && renderFuelMeasurementScreen()}
+          {currentScreen === 'tankEntry' && renderTankEntryScreen()}
+          {currentScreen === 'tzaSelection' && renderTzaSelection()}
+          {currentScreen === 'tzaReservoirSelection' && renderTzaReservoirSelection()}
+          {currentScreen === 'tzaEntry' && renderTzaEntry()}
+          {currentScreen === 'priemReservoirSelection' && renderPriemReservoirSelection()}
+          {currentScreen === 'priemEntry' && renderPriemEntry()}
+          {currentScreen === 'vsTzaSelection' && renderVsTzaSelection()}
+          {currentScreen === 'vsEntry' && renderVsEntry()}
+          {currentScreen === 'jdcEntry' && renderJdcEntry()}
+        </div>
       </div>
     </div>
   );
