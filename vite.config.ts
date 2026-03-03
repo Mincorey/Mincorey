@@ -17,7 +17,6 @@ export default defineConfig(({ mode }) => {
             include: ['stream', 'buffer', 'util', 'process'],
             globals: {
                 Buffer: true,
-                global: true,
                 process: true,
             },
         }),

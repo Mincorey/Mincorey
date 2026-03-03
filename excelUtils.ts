@@ -3,7 +3,52 @@ import { RGS_50_TABLE, RGS_100_TABLE, GT_66_TABLE, GT_72_TABLE, GT_81_TABLE, GT_
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
-// ... (STYLES and MAPPINGS)
+
+const STYLES = {
+    header: { font: { bold: true }, alignment: { horizontal: 'center' as const }, border: { top: { style: 'thin' as const }, bottom: { style: 'thin' as const }, left: { style: 'thin' as const }, right: { style: 'thin' as const } } },
+    cellNormal: { border: { top: { style: 'thin' as const }, bottom: { style: 'thin' as const }, left: { style: 'thin' as const }, right: { style: 'thin' as const } } },
+    cellHighlight: { font: { bold: true }, fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFFFE0B2' } }, border: { top: { style: 'thin' as const }, bottom: { style: 'thin' as const }, left: { style: 'thin' as const }, right: { style: 'thin' as const } } },
+    tankTitle: { font: { bold: true, size: 12 }, alignment: { horizontal: 'center' as const }, fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFE0E0E0' } }, border: { top: { style: 'medium' as const }, bottom: { style: 'medium' as const }, left: { style: 'medium' as const }, right: { style: 'medium' as const } } },
+    labelRight: { alignment: { horizontal: 'right' as const }, font: { italic: true } }
+};
+
+const TANK_CELLS_MAPPING: Record<string, string[]> = {
+    'РГС-50 №1': ['B4', 'B5', 'B6', 'B7', 'B8'],
+    'РГС-50 №2': ['E4', 'E5', 'E6', 'E7', 'E8'],
+    'РГС-50 №3': ['H4', 'H5', 'H6', 'H7', 'H8'],
+    'РГС-50 №4': ['K4', 'K5', 'K6', 'K7', 'K8'],
+    'РГС-50 №5': ['B15', 'B16', 'B17', 'B18', 'B19'],
+    'РГС-50 №6': ['E15', 'E16', 'E17', 'E18', 'E19'],
+    'РГС-50 №7': ['H15', 'H16', 'H17', 'H18', 'H19'],
+    'РГС-50 №8': ['K15', 'K16', 'K17', 'K18', 'K19'],
+    'РГС-100 №1': ['B26', 'B27', 'B28', 'B29', 'B30'],
+    'РГС-100 №2': ['E26', 'E27', 'E28', 'E29', 'E30'],
+    'РГС-100 №3': ['H26', 'H27', 'H28', 'H29', 'H30'],
+    'РГС-100 №4': ['K26', 'K27', 'K28', 'K29', 'K30'],
+};
+
+const AVERAGE_MAPPING: Record<string, string> = {
+    'РГС-50 №1': 'B9', 'РГС-50 №2': 'E9', 'РГС-50 №3': 'H9', 'РГС-50 №4': 'K9',
+    'РГС-50 №5': 'B20', 'РГС-50 №6': 'E20', 'РГС-50 №7': 'H20', 'РГС-50 №8': 'K20',
+    'РГС-100 №1': 'B31', 'РГС-100 №2': 'E31', 'РГС-100 №3': 'H31', 'РГС-100 №4': 'K31',
+};
+
+const VOLUME_MAPPING: Record<string, string> = {
+    'РГС-50 №1': 'B10', 'РГС-50 №2': 'E10', 'РГС-50 №3': 'H10', 'РГС-50 №4': 'K10',
+    'РГС-50 №5': 'B21', 'РГС-50 №6': 'E21', 'РГС-50 №7': 'H21', 'РГС-50 №8': 'K21',
+    'РГС-100 №1': 'B32', 'РГС-100 №2': 'E32', 'РГС-100 №3': 'H32', 'РГС-100 №4': 'K32',
+};
+
+const MASS_MAPPING: Record<string, string> = {
+    'РГС-50 №1': 'B11', 'РГС-50 №2': 'E11', 'РГС-50 №3': 'H11', 'РГС-50 №4': 'K11',
+    'РГС-50 №5': 'B22', 'РГС-50 №6': 'E22', 'РГС-50 №7': 'H22', 'РГС-50 №8': 'K22',
+    'РГС-100 №1': 'B33', 'РГС-100 №2': 'E33', 'РГС-100 №3': 'H33', 'РГС-100 №4': 'K33',
+};
+
+const TOTALS_MAPPING_50 = { volume: 'B36', mass: 'E36', avgDensity: 'H36', avgTemp: 'K36' };
+const TOTALS_MAPPING_100 = { volume: 'B37', mass: 'E37', avgDensity: 'H37', avgTemp: 'K37' };
+const TOTALS_MAPPING_ALL = { volume: 'B38', mass: 'E38', avgDensity: 'H38', avgTemp: 'K38' };
+
 
 export const getInventoryMeasurementsData = (workbook: ExcelJS.Workbook) => {
     const ws = workbook.getWorksheet('Zamer_INVENT');
